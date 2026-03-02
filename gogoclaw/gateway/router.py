@@ -4,6 +4,7 @@ GogoClaw 网关模块 - 消息路由
 from typing import Optional, Dict, Any, Callable, Awaitable
 from dataclasses import dataclass
 import logging
+from datetime import datetime
 
 from gogoclaw.gateway.protocol import Message, MessageRequest, SessionInfo
 from gogoclaw.gateway.security import AccessControl
@@ -54,14 +55,19 @@ class SessionResolver:
         """获取会话信任级别"""
         parts = session_id.split(":")
         
-        if ":main" in session_id:
+        # 检查会话类型
+        # 格式: agent:<agentId>:<channel>:<type>:<id>
+        # 例如: agent:main:telegram:dm:123
+        if len(parts) >= 4:
+            session_type = parts[3]  # dm 或 group
+            if session_type == "dm":
+                return "dm"
+            elif session_type == "group":
+                return "group"
+        elif len(parts) >= 3 and parts[2] == "main":
             return "main"
-        elif ":dm:" in session_id:
-            return "dm"
-        elif ":group:" in session_id:
-            return "group"
             
-        return "dm"  # 默认沙箱隔离
+
         
     @staticmethod
     def parse_session(session_id: str) -> Dict[str, str]:

@@ -12,7 +12,8 @@ from gogoclaw.gateway.protocol import Message, MessageRequest
 from gogoclaw.agent.session import SessionManager, Session
 from gogoclaw.agent.context import SystemPromptBuilder, Context
 from gogoclaw.agent.tools import get_builtin_tools, ToolRegistry
-from gogoclaw.memory import MemoryStore
+from gogoclaw.agent.model_client import ModelClient, create_model_client, ModelResponse
+from gogoclaw.memory.store import MemoryStore
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +122,7 @@ class AgentEngine:
         self.context_builder = SystemPromptBuilder(storage_dir / "workspace")
         
         # 工具执行
-        self.tool_executor = ToolExecutor(sandbox_enabled=config.sandbox_enabled)
+        self.tool_executor = ToolExecutor(sandbox_enabled=self.config.sandbox_enabled)
         
         # 模型客户端
         self._model_client = None
@@ -202,7 +203,12 @@ class AgentEngine:
         self.tool_executor.register_handler("list_directory", list_directory)
         self.tool_executor.register_handler("search_memory", search_memory)
         
-    def set_model_client(self, client):
+    def set_model_client(self, client: ModelClient):
+        """设置模型客户端"""
+        self._model_client = client
+        # 如果客户端支持工具执行，设置工具执行器
+        if hasattr(client, 'set_tool_executor'):
+            client.set_tool_executor(self.tool_executor)
         """设置模型客户端"""
         self._model_client = client
         
@@ -259,19 +265,63 @@ class AgentEngine:
             session_trust_level=session.trust_level
         )
         
-        # 5. 调用模型
+        # 5. 调用模型 (支持工具执行循环)
         try:
-            response_text = await self._call_model(context, session)
+            response = await self._call_model(context, session)
+            response_text = response.content
+            
+            # 如果有工具调用，处理它们
+            max_tool_calls = 10
+            tool_call_count = 0
+            
+            while response.tool_calls and tool_call_count < max_tool_calls:
+                tool_call_count += 1
+                
+                # 将工具调用添加到消息历史
+                for tool_call in response.tool_calls:
+                    # 添加助手消息（带工具调用）
+                    session.add_message(Message(
+                        session_id=request.session_id,
+                        role="assistant",
+                        content=response_text,
+                        tool_calls=[tool_call]
+                    ))
+                    
+                    # 执行工具
+                    tool_name = tool_call.get("function", {}).get("name")
+                    tool_args = tool_call.get("function", {}).get("arguments", {})
+                    
+                    # 如果 arguments 是字符串，解析为 JSON
+                    if isinstance(tool_args, str):
+                        try:
+                            tool_args = json.loads(tool_args)
+                        except:
+                            tool_args = {}
+                    
+                    tool_result = await self.tool_executor.execute(
+                        tool_name, 
+                        tool_args, 
+                        trust_level=session.trust_level
+                    )
+                    
+                    # 添加工具结果到消息历史
+                    session.add_message(Message(
+                        session_id=request.session_id,
+                        role="tool",
+                        content=tool_result,
+                        tool_call_id=tool_call.get("id")
+                    ))
+                
+                # 再次调用模型，获取下一轮响应
+                session_history = [{"role": m.role, "content": m.content} for m in session.history]
+                context.chat_history = session_history
+                
+                response = await self._call_model(context, session)
+                response_text = response.content
+            
         except Exception as e:
             logger.error(f"Model call error: {e}")
-            response_text = f"Error: {str(e)}"
-            
-        # 6. 处理工具调用
-        while True:
-            # 检查是否有工具调用
-            # 简化版本: 直接返回响应
-            # 实际需要解析模型输出中的工具调用
-            break
+
             
         # 7. 添加助手消息
         assistant_message = Message(
@@ -303,7 +353,26 @@ class AgentEngine:
                 
         return assistant_message
         
-    async def _call_model(self, context: Context, session: Session) -> str:
+    async def _call_model(self, context: Context, session: Session) -> ModelResponse:
+        """调用模型"""
+        if not self._model_client:
+            return ModelResponse(content="Model client not configured")
+            
+        # 构建消息
+        messages = [{"role": "system", "content": context.system_prompt}]
+        messages.extend(context.chat_history)
+        
+        # 获取工具定义
+        tools = context.tools if self.config.tools else None
+        
+        # 调用模型
+        response = await self._model_client.chat(
+            messages=messages,
+            tools=tools,
+            model=self.config.model_name
+        )
+        
+        return response
         """调用模型"""
         if not self._model_client:
             return "Model client not configured"
@@ -324,8 +393,3 @@ class AgentEngine:
         
         return response.get("content", "")
 
-
-# 配置变量用于 tool_executor
-config = type('Config', (), {
-    'sandbox_enabled': True
-})()

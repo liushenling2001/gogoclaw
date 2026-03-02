@@ -280,6 +280,3 @@ class GatewayServer:
             log_level="debug" if self.settings.debug else "info"
         )
 
-
-# 辅助函数
-from datetime import datetime
