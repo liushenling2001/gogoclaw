@@ -3,10 +3,20 @@ GogoClaw 渠道适配器 - Telegram
 """
 from typing import Dict, Any, Optional
 import logging
+import asyncio
+import aiohttp
 
 from gogoclaw.channels.base import ChannelAdapter, ChannelType, ChannelConfig, ChannelMessage
 
 logger = logging.getLogger(__name__)
+
+
+class TelegramConfig(ChannelConfig):
+    """Telegram 渠道配置"""
+    polling_enabled: bool = True
+    polling_timeout: int = 30
+    webhook_url: Optional[str] = None
+    webhook_secret: Optional[str] = None
 
 
 class TelegramAdapter(ChannelAdapter):

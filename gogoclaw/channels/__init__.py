@@ -8,8 +8,11 @@ from gogoclaw.channels.base import (
     ChannelMessage,
     WebUIAdapter,
 )
-from gogoclaw.channels.telegram import TelegramAdapter
-from gogoclaw.channels.discord import DiscordAdapter
+from gogoclaw.channels.telegram import TelegramAdapter, TelegramConfig
+from gogoclaw.channels.discord import DiscordAdapter, DiscordConfig
+from gogoclaw.channels.feishu import FeishuAdapter, FeishuConfig
+from gogoclaw.channels.dingtalk import DingTalkAdapter, DingTalkConfig
+from gogoclaw.channels.whatsapp import WhatsAppAdapter, WhatsAppConfig
 
 __all__ = [
     "ChannelAdapter",
@@ -17,6 +20,19 @@ __all__ = [
     "ChannelConfig",
     "ChannelMessage",
     "WebUIAdapter",
+    # Telegram
     "TelegramAdapter",
+    "TelegramConfig",
+    # Discord
     "DiscordAdapter",
+    "DiscordConfig",
+    # Feishu
+    "FeishuAdapter",
+    "FeishuConfig",
+    # DingTalk
+    "DingTalkAdapter",
+    "DingTalkConfig",
+    # WhatsApp
+    "WhatsAppAdapter",
+    "WhatsAppConfig",
 ]

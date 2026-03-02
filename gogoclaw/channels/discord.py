@@ -12,6 +12,13 @@ from gogoclaw.channels.base import ChannelAdapter, ChannelType, ChannelConfig, C
 logger = logging.getLogger(__name__)
 
 
+class DiscordConfig(ChannelConfig):
+    """Discord 渠道配置"""
+    gateway_url: Optional[str] = None
+    intents: int = 3276799  # 默认所有 intents
+    heartbeat_interval: int = 45
+
+
 class DiscordAdapter(ChannelAdapter):
     """Discord 适配器"""
     
