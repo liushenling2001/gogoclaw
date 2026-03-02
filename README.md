@@ -94,7 +94,7 @@ gogoclaw gateway
 gogoclaw gateway --port 8080
 ```
 
-现在可以访问 `http://127.0.0.1:18789` 使用 Web UI。
+现在可以访问 `http://127.0.0.1:16888` 使用 Web UI。
 
 ## 配置说明
 
@@ -114,7 +114,7 @@ gogoclaw gateway --port 8080
 {
   "gateway": {
     "host": "127.0.0.1",
-    "port": 18789,
+    "port": 16888,
     "auth_enabled": false
   },
   "agents": {

@@ -58,7 +58,7 @@ class GatewayConfig(BaseSettings):
         extra="ignore"
     )
     host: str = "127.0.0.1"
-    port: int = 18789
+    port: int = 16888
     auth_enabled: bool = False
     cors_origins: List[str] = Field(default_factory=lambda: ["*"])
 

@@ -144,7 +144,7 @@ class TestGatewayConfig:
         config = GatewayConfig()
         
         assert config.host == "127.0.0.1"
-        assert config.port == 18789
+        assert config.port == 16888
         assert config.auth_enabled is False
         assert "*" in config.cors_origins
 
@@ -200,7 +200,7 @@ class TestSettings:
         settings = Settings()
         
         assert settings.gateway.host == "127.0.0.1"
-        assert settings.gateway.port == 18789
+        assert settings.gateway.port == 16888
         
     def test_settings_agents_access(self):
         """测试智能体配置访问"""
@@ -323,7 +323,7 @@ class TestConfigFileLoading:
                 // 网关配置
                 "gateway": {
                     "host": "127.0.0.1",
-                    "port": 18789,
+                    "port": 16888,
                 },
                 /* 智能体配置 */
                 "agents": {
@@ -339,7 +339,7 @@ class TestConfigFileLoading:
             settings = Settings()
             settings.load_from_file(config_file)
             
-            assert settings.gateway.port == 18789
+            assert settings.gateway.port == 16888
             assert settings.agents["main"].name == "GogoClaw"
             
     def test_load_nonexistent_file(self):

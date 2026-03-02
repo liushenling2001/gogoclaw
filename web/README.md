@@ -90,7 +90,7 @@ uvicorn server:app --host 0.0.0.0 --port 18790 --reload
 
 ## 注意事项
 
-1. **WebSocket 端口**: 默认 18790 (与 Gateway 的 18789 区分)
+1. **WebSocket 端口**: 默认 18790 (与 Gateway 的 16888 区分)
 2. **CORS**: 已配置允许所有来源 (生产环境应限制)
 3. **API Key 安全**: 配置保存在本地，注意保护
 4. **生产部署**: 建议使用 Nginx 反向代理 + HTTPS

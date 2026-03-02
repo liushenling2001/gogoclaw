@@ -2,7 +2,7 @@
 
 ## 基础信息
 
-- **Base URL**: `http://localhost:18789`
+- **Base URL**: `http://localhost:16888`
 - **认证方式**: Bearer Token (可选，取决于配置)
 - **内容类型**: `application/json`
 - **字符编码**: `UTF-8`
@@ -25,7 +25,7 @@ Authorization: Bearer <your-token>
 
 **请求示例**:
 ```bash
-curl http://localhost:18789/api/config
+curl http://localhost:16888/api/config
 ```
 
 **响应示例**:
@@ -33,7 +33,7 @@ curl http://localhost:18789/api/config
 {
   "gateway": {
     "host": "127.0.0.1",
-    "port": 18789,
+    "port": 16888,
     "auth_enabled": false
   },
   "agents": {
@@ -63,7 +63,7 @@ curl http://localhost:18789/api/config
 
 **请求示例**:
 ```bash
-curl -X PUT http://localhost:18789/api/config \
+curl -X PUT http://localhost:16888/api/config \
   -H "Content-Type: application/json" \
   -d '{
     "agents": {
@@ -93,7 +93,7 @@ curl -X PUT http://localhost:18789/api/config \
 
 **请求示例**:
 ```bash
-curl -X POST http://localhost:18789/api/config/test \
+curl -X POST http://localhost:16888/api/config/test \
   -H "Content-Type: application/json" \
   -d '{
     "provider": "openai",
@@ -120,7 +120,7 @@ curl -X POST http://localhost:18789/api/config/test \
 
 **请求示例**:
 ```bash
-curl http://localhost:18789/api/sessions
+curl http://localhost:16888/api/sessions
 ```
 
 **响应示例**:
@@ -148,7 +148,7 @@ curl http://localhost:18789/api/sessions
 
 **请求示例**:
 ```bash
-curl -X POST http://localhost:18789/api/sessions \
+curl -X POST http://localhost:16888/api/sessions \
   -H "Content-Type: application/json" \
   -d '{
     "agent_id": "main",
@@ -172,7 +172,7 @@ curl -X POST http://localhost:18789/api/sessions \
 
 **请求示例**:
 ```bash
-curl -X DELETE http://localhost:18789/api/sessions/agent:main:webui:dm:abc123
+curl -X DELETE http://localhost:16888/api/sessions/agent:main:webui:dm:abc123
 ```
 
 **响应示例**:
@@ -191,7 +191,7 @@ curl -X DELETE http://localhost:18789/api/sessions/agent:main:webui:dm:abc123
 
 **请求示例**:
 ```bash
-curl http://localhost:18789/api/sessions/agent:main:webui:dm:abc123/history
+curl http://localhost:16888/api/sessions/agent:main:webui:dm:abc123/history
 ```
 
 **响应示例**:
@@ -225,7 +225,7 @@ curl http://localhost:18789/api/sessions/agent:main:webui:dm:abc123/history
 
 **请求示例**:
 ```bash
-curl -X POST http://localhost:18789/api/message \
+curl -X POST http://localhost:16888/api/message \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "agent:main:webui:dm:abc123",
@@ -269,7 +269,7 @@ WebSocket 连接，用于实时消息推送。
 
 **连接示例**:
 ```javascript
-const ws = new WebSocket('ws://localhost:18789/ws');
+const ws = new WebSocket('ws://localhost:16888/ws');
 
 ws.onopen = () => {
   console.log('Connected');
@@ -324,7 +324,7 @@ ws.onmessage = (event) => {
 
 **请求示例**:
 ```bash
-curl http://localhost:18789/api/channels
+curl http://localhost:16888/api/channels
 ```
 
 **响应示例**:
@@ -362,7 +362,7 @@ curl http://localhost:18789/api/channels
 
 **请求示例**:
 ```bash
-curl http://localhost:18789/api/channels/telegram/status
+curl http://localhost:16888/api/channels/telegram/status
 ```
 
 **响应示例**:
@@ -386,7 +386,7 @@ curl http://localhost:18789/api/channels/telegram/status
 
 **请求示例**:
 ```bash
-curl http://localhost:18789/api/tools
+curl http://localhost:16888/api/tools
 ```
 
 **响应示例**:
@@ -433,7 +433,7 @@ curl http://localhost:18789/api/tools
 
 **请求示例**:
 ```bash
-curl "http://localhost:18789/api/memory?query=previous+conversation&limit=5"
+curl "http://localhost:16888/api/memory?query=previous+conversation&limit=5"
 ```
 
 **响应示例**:
@@ -461,7 +461,7 @@ curl "http://localhost:18789/api/memory?query=previous+conversation&limit=5"
 
 **请求示例**:
 ```bash
-curl -X DELETE http://localhost:18789/api/memory/mem-1
+curl -X DELETE http://localhost:16888/api/memory/mem-1
 ```
 
 **响应示例**:
@@ -480,12 +480,12 @@ curl -X DELETE http://localhost:18789/api/memory/mem-1
 
 ```bash
 # 1. 创建会话
-SESSION=$(curl -s -X POST http://localhost:18789/api/sessions \
+SESSION=$(curl -s -X POST http://localhost:16888/api/sessions \
   -H "Content-Type: application/json" \
   -d '{"agent_id": "main"}' | jq -r '.session_id')
 
 # 2. 发送消息
-curl -X POST http://localhost:18789/api/message \
+curl -X POST http://localhost:16888/api/message \
   -H "Content-Type: application/json" \
   -d "{
     \"session_id\": \"$SESSION\",
@@ -493,10 +493,10 @@ curl -X POST http://localhost:18789/api/message \
   }"
 
 # 3. 获取历史
-curl http://localhost:18789/api/sessions/$SESSION/history
+curl http://localhost:16888/api/sessions/$SESSION/history
 
 # 4. 删除会话
-curl -X DELETE http://localhost:18789/api/sessions/$SESSION
+curl -X DELETE http://localhost:16888/api/sessions/$SESSION
 ```
 
 ---
@@ -553,11 +553,11 @@ API 版本通过 URL 路径或请求头指定：
 
 ```bash
 # URL 路径
-curl http://localhost:18789/api/v1/config
+curl http://localhost:16888/api/v1/config
 
 # 请求头
 curl -H "Accept: application/vnd.gogoclaw.v1+json" \
-  http://localhost:18789/api/config
+  http://localhost:16888/api/config
 ```
 
 ---

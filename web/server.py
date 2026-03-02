@@ -112,7 +112,7 @@ def load_config() -> Dict[str, Any]:
     return {
         "gateway": {
             "host": "127.0.0.1",
-            "port": 18789,
+            "port": 16888,
             "auth_enabled": False,
             "cors_origins": ["*"]
         },

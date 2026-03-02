@@ -20,7 +20,7 @@ class TestConfig:
         
         settings = Settings()
         assert settings.gateway.host == "127.0.0.1"
-        assert settings.gateway.port == 18789
+        assert settings.gateway.port == 16888
         assert "main" in settings.agents
         
     def test_agent_config(self):

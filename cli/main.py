@@ -33,7 +33,7 @@ def cli():
 
 @cli.command()
 @click.option("--host", default="127.0.0.1", help="绑定地址")
-@click.option("--port", default=18789, help="绑定端口")
+@click.option("--port", default=16888, help="绑定端口")
 @click.option("--config", type=click.Path(), help="配置文件路径")
 def gateway(host: str, port: int, config: str):
     """启动网关服务器"""
@@ -140,7 +140,7 @@ def init():
         default_config = {
             "gateway": {
                 "host": "127.0.0.1",
-                "port": 18789,
+                "port": 16888,
                 "auth_enabled": False
             },
             "agents": {
