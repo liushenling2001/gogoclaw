@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gogoclaw"
+version = "0.1.0"
+description = "开放的智能体系统 - 基于 OpenClaw 架构的 Python 实现"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "GogoClaw Team", email = "team@gogoclaw.ai"}
+]
+keywords = ["ai", "agent", "llm", "openai", "claude", "gpt", "assistant"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "websockets>=12.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.0.0",
+    "aiohttp>=3.9.0",
+    "click>=8.1.0",
+    "sqlalchemy>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+]
+
+# 向量存储支持
+qdrant = ["qdrant-client>=1.7.0"]
+chroma = ["chromadb>=0.4.0"]
+
+# Docker 支持
+docker = ["docker>=7.0.0"]
+
+# 全部可选依赖
+all = [
+    "gogoclaw[qdrant,chroma,docker]",
+]
+
+[project.scripts]
+gogoclaw = "cli.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gogoclaw*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false

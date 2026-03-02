@@ -1,0 +1,331 @@
+"""
+GogoClaw 智能体模块 - Agent 引擎
+"""
+import asyncio
+import json
+import logging
+from typing import Dict, Any, Optional, List, Callable, Awaitable
+from pathlib import Path
+from dataclasses import dataclass
+
+from gogoclaw.gateway.protocol import Message, MessageRequest
+from gogoclaw.agent.session import SessionManager, Session
+from gogoclaw.agent.context import SystemPromptBuilder, Context
+from gogoclaw.agent.tools import get_builtin_tools, ToolRegistry
+from gogoclaw.memory import MemoryStore
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class AgentConfig:
+    """Agent 配置"""
+    agent_id: str
+    name: str
+    model_provider: str
+    model_name: str
+    system_prompt: str
+    tools: List[str]
+    sandbox_enabled: bool
+    memory_enabled: bool
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AgentConfig":
+        model = data.get("model", {})
+        return cls(
+            agent_id=data.get("agent_id", "main"),
+            name=data.get("name", "GogoClaw"),
+            model_provider=model.get("provider", "openai"),
+            model_name=model.get("model_name", "gpt-4o"),
+            system_prompt=data.get("system_prompt", ""),
+            tools=data.get("tools", ["command", "browser", "file"]),
+            sandbox_enabled=data.get("sandbox_enabled", True),
+            memory_enabled=data.get("memory_enabled", True)
+        )
+
+
+class ToolExecutor:
+    """工具执行器"""
+    
+    def __init__(self, sandbox_enabled: bool = True):
+        self.sandbox_enabled = sandbox_enabled
+        self._tool_handlers: Dict[str, Callable] = {}
+        
+    def register_handler(self, tool_name: str, handler: Callable):
+        """注册工具处理器"""
+        self._tool_handlers[tool_name] = handler
+        
+    async def execute(
+        self, 
+        tool_name: str, 
+        arguments: Dict[str, Any],
+        trust_level: str = "dm"
+    ) -> str:
+        """执行工具"""
+        handler = self._tool_handlers.get(tool_name)
+        
+        if not handler:
+            return json.dumps({
+                "error": f"Unknown tool: {tool_name}",
+                "available_tools": list(self._tool_handlers.keys())
+            })
+            
+        try:
+            # 在沙箱中执行
+            if self.sandbox_enabled and trust_level != "main":
+                result = await self._execute_in_sandbox(handler, arguments)
+            else:
+                # 直接执行
+                if asyncio.iscoroutinefunction(handler):
+                    result = await handler(**arguments)
+                else:
+                    result = handler(**arguments)
+                    
+            return json.dumps(result, ensure_ascii=False, indent=2)
+            
+        except Exception as e:
+            logger.error(f"Tool execution error: {e}")
+            return json.dumps({"error": str(e)}, ensure_ascii=False)
+            
+    async def _execute_in_sandbox(
+        self, 
+        handler: Callable, 
+        arguments: Dict[str, Any]
+    ) -> Any:
+        """在沙箱中执行"""
+        # TODO: 实现 Docker 沙箱
+        # 暂时直接执行
+        if asyncio.iscoroutinefunction(handler):
+            return await handler(**arguments)
+        else:
+            return handler(**arguments)
+
+
+class AgentEngine:
+    """Agent 引擎"""
+    
+    def __init__(
+        self,
+        agent_config: AgentConfig,
+        storage_dir: Path,
+        memory_store: Optional[MemoryStore] = None
+    ):
+        self.config = agent_config
+        self.storage_dir = storage_dir
+        self.memory_store = memory_store
+        
+        # 会话管理
+        self.session_manager = SessionManager(storage_dir)
+        
+        # 上下文构建
+        self.context_builder = SystemPromptBuilder(storage_dir / "workspace")
+        
+        # 工具执行
+        self.tool_executor = ToolExecutor(sandbox_enabled=config.sandbox_enabled)
+        
+        # 模型客户端
+        self._model_client = None
+        
+        # 注册内置工具
+        self._register_builtin_tools()
+        
+    def _register_builtin_tools(self):
+        """注册内置工具"""
+        # 注册工具处理器
+        # TODO: 实现实际的文件操作、命令执行等
+        
+        async def execute_command(command: str, timeout: int = 30) -> Dict:
+            """执行命令"""
+            # TODO: 实现沙箱执行
+            return {"output": f"Would execute: {command}", "exit_code": 0}
+            
+        async def read_file(path: str, offset: int = 0, limit: int = 100) -> Dict:
+            """读取文件"""
+            try:
+                p = Path(path)
+                if not p.exists():
+                    return {"error": f"File not found: {path}"}
+                    
+                lines = p.read_text(encoding="utf-8").splitlines()
+                content = "\n".join(lines[offset:offset+limit])
+                
+                return {
+                    "path": path,
+                    "total_lines": len(lines),
+                    "content": content
+                }
+            except Exception as e:
+                return {"error": str(e)}
+                
+        async def write_file(path: str, content: str) -> Dict:
+            """写入文件"""
+            try:
+                p = Path(path)
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text(content, encoding="utf-8")
+                return {"success": True, "path": path}
+            except Exception as e:
+                return {"error": str(e)}
+                
+        async def list_directory(path: str = ".", include_hidden: bool = False) -> Dict:
+            """列出目录"""
+            try:
+                p = Path(path)
+                if not p.exists():
+                    return {"error": f"Directory not found: {path}"}
+                    
+                items = []
+                for item in p.iterdir():
+                    if not include_hidden and item.name.startswith("."):
+                        continue
+                    items.append({
+                        "name": item.name,
+                        "type": "directory" if item.is_dir() else "file"
+                    })
+                    
+                return {"path": path, "items": items}
+            except Exception as e:
+                return {"error": str(e)}
+                
+        async def search_memory(query: str, limit: int = 5) -> Dict:
+            """搜索记忆"""
+            if not self.memory_store:
+                return {"error": "Memory store not initialized"}
+                
+            results = await self.memory_store.search(query, limit=limit)
+            return {"query": query, "results": results}
+            
+        # 注册处理器
+        self.tool_executor.register_handler("execute_command", execute_command)
+        self.tool_executor.register_handler("read_file", read_file)
+        self.tool_executor.register_handler("write_file", write_file)
+        self.tool_executor.register_handler("list_directory", list_directory)
+        self.tool_executor.register_handler("search_memory", search_memory)
+        
+    def set_model_client(self, client):
+        """设置模型客户端"""
+        self._model_client = client
+        
+    async def handle_message(self, request: MessageRequest) -> Message:
+        """处理消息"""
+        # 1. 获取或创建会话
+        session = self.session_manager.get_session(request.session_id)
+        if not session:
+            session = self.session_manager.create_session(
+                session_id=request.session_id,
+                agent_id=self.config.agent_id,
+                channel=request.channel,
+                trust_level="main" if "main" in request.session_id else "dm"
+            )
+            
+        # 2. 添加用户消息
+        user_message = Message(
+            session_id=request.session_id,
+            role="user",
+            content=request.content,
+            channel=request.channel,
+            metadata=request.metadata
+        )
+        session.add_message(user_message)
+        
+        # 3. 搜索相关记忆
+        relevant_memories = []
+        if self.memory_store:
+            try:
+                memories = await self.memory_store.search(
+                    request.content, 
+                    limit=3
+                )
+                relevant_memories = [m["content"] for m in memories]
+            except Exception as e:
+                logger.warning(f"Memory search error: {e}")
+                
+        # 4. 构建上下文
+        config_dict = {
+            "agent_id": self.config.agent_id,
+            "name": self.config.name,
+            "model": {
+                "provider": self.config.model_provider,
+                "model_name": self.config.model_name
+            },
+            "system_prompt": self.config.system_prompt,
+            "tools": self.config.tools
+        }
+        
+        context = self.context_builder.build(
+            agent_config=config_dict,
+            session_history=[{"role": m.role, "content": m.content} for m in session.history[:-1]],
+            relevant_memories=relevant_memories,
+            session_trust_level=session.trust_level
+        )
+        
+        # 5. 调用模型
+        try:
+            response_text = await self._call_model(context, session)
+        except Exception as e:
+            logger.error(f"Model call error: {e}")
+            response_text = f"Error: {str(e)}"
+            
+        # 6. 处理工具调用
+        while True:
+            # 检查是否有工具调用
+            # 简化版本: 直接返回响应
+            # 实际需要解析模型输出中的工具调用
+            break
+            
+        # 7. 添加助手消息
+        assistant_message = Message(
+            session_id=request.session_id,
+            role="assistant",
+            content=response_text,
+            channel=request.channel
+        )
+        session.add_message(assistant_message)
+        
+        # 8. 保存会话
+        self.session_manager.save_session(session)
+        
+        # 9. 存储到记忆
+        if self.memory_store:
+            try:
+                await self.memory_store.add(
+                    session_id=request.session_id,
+                    role="user",
+                    content=request.content
+                )
+                await self.memory_store.add(
+                    session_id=request.session_id,
+                    role="assistant",
+                    content=response_text
+                )
+            except Exception as e:
+                logger.warning(f"Memory store error: {e}")
+                
+        return assistant_message
+        
+    async def _call_model(self, context: Context, session: Session) -> str:
+        """调用模型"""
+        if not self._model_client:
+            return "Model client not configured"
+            
+        # 构建消息
+        messages = [{"role": "system", "content": context.system_prompt}]
+        messages.extend(context.chat_history)
+        
+        # 获取工具定义
+        tools = context.tools if self.config.tools else None
+        
+        # 调用模型
+        response = await self._model_client.chat(
+            messages=messages,
+            tools=tools,
+            model=self.config.model_name
+        )
+        
+        return response.get("content", "")
+
+
+# 配置变量用于 tool_executor
+config = type('Config', (), {
+    'sandbox_enabled': True
+})()
