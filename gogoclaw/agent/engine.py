@@ -12,7 +12,7 @@ from gogoclaw.gateway.protocol import Message, MessageRequest
 from gogoclaw.agent.session import SessionManager, Session
 from gogoclaw.agent.context import SystemPromptBuilder, Context
 from gogoclaw.agent.tools import get_builtin_tools, ToolRegistry
-from gogoclaw.agent.model_client import ModelClient, create_model_client, ModelResponse
+from gogoclaw.agent.model_client import BaseModelClient as ModelClient, create_model_client, ModelResponse
 from gogoclaw.memory.store import MemoryStore
 
 logger = logging.getLogger(__name__)

@@ -583,6 +583,31 @@ class GoogleClient(BaseModelClient):
             )
 
 
+# 类型别名
+ModelClient = BaseModelClient
+
+
+class MockClient(BaseModelClient):
+    """模拟模型客户端，用于测试"""
+    
+    def __init__(self, mock_response: str, tool_calls: Optional[List[Dict[str, Any]]] = None):
+        self.mock_response = mock_response
+        self.mock_tool_calls = tool_calls
+        
+    async def chat(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        model: str = "mock",
+        **kwargs
+    ) -> ModelResponse:
+        """返回模拟响应"""
+        return ModelResponse(
+            content=self.mock_response,
+            tool_calls=self.mock_tool_calls
+        )
+
+
 def create_model_client(
     provider: str,
     api_key: Optional[str] = None,
