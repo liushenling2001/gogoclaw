@@ -85,8 +85,12 @@ class ToolExecutor:
             return json.dumps(result, ensure_ascii=False, indent=2)
             
         except Exception as e:
-            logger.error(f"Tool execution error: {e}")
-            return json.dumps({"error": str(e)}, ensure_ascii=False)
+            logger.error(f"Tool execution error: {tool_name} - {e}", exc_info=True)
+            return json.dumps({
+                "error": str(e),
+                "tool_name": tool_name,
+                "arguments": arguments
+            }, ensure_ascii=False)
             
     async def _execute_in_sandbox(
         self, 
@@ -132,13 +136,59 @@ class AgentEngine:
         
     def _register_builtin_tools(self):
         """注册内置工具"""
-        # 注册工具处理器
-        # TODO: 实现实际的文件操作、命令执行等
+        import subprocess
+        import asyncio
         
-        async def execute_command(command: str, timeout: int = 30) -> Dict:
-            """执行命令"""
-            # TODO: 实现沙箱执行
-            return {"output": f"Would execute: {command}", "exit_code": 0}
+        async def execute_command(command: str, timeout: int = 30, sandbox: bool = False) -> Dict:
+            """
+            执行命令
+            
+            Args:
+                command: 要执行的命令
+                timeout: 超时时间 (秒)
+                sandbox: 是否在沙箱中执行 (暂未实现 Docker 沙箱)
+            """
+            try:
+                # 安全检查：阻止危险命令
+                dangerous_cmds = ["rm -rf", "sudo", "su ", "chmod 777", "dd if=", "> /dev/", "> /etc/"]
+                for dangerous in dangerous_cmds:
+                    if dangerous in command:
+                        return {
+                            "error": f"Dangerous command blocked: {dangerous}",
+                            "exit_code": -1
+                        }
+                
+                # 执行命令
+                process = await asyncio.create_subprocess_shell(
+                    command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=str(self.storage_dir)
+                )
+                
+                try:
+                    stdout, stderr = await asyncio.wait_for(
+                        process.communicate(),
+                        timeout=timeout
+                    )
+                    
+                    return {
+                        "output": stdout.decode("utf-8", errors="replace"),
+                        "stderr": stderr.decode("utf-8", errors="replace"),
+                        "exit_code": process.returncode or 0
+                    }
+                except asyncio.TimeoutError:
+                    process.kill()
+                    return {
+                        "error": f"Command timeout after {timeout}s",
+                        "exit_code": -1
+                    }
+                    
+            except Exception as e:
+                return {
+                    "error": str(e),
+                    "exit_code": -1
+                }
             
         async def read_file(path: str, offset: int = 0, limit: int = 100) -> Dict:
             """读取文件"""
@@ -196,12 +246,52 @@ class AgentEngine:
             results = await self.memory_store.search(query, limit=limit)
             return {"query": query, "results": results}
             
+        async def browser_navigate(url: str, action: str = "get_html", **kwargs) -> Dict:
+            """
+            浏览器操作
+            
+            Args:
+                url: 要访问的 URL
+                action: 操作类型 (goto, get_html, screenshot, click, type)
+                selector: CSS 选择器 (用于 click/type)
+                text: 要输入的文本 (用于 type)
+            """
+            try:
+                # 使用 web_fetch 获取页面内容
+                if action in ["goto", "get_html"]:
+                    from gogoclaw.utils.web_fetch import fetch_url
+                    result = await fetch_url(url)
+                    return {
+                        "url": url,
+                        "action": action,
+                        "content": result.get("content", ""),
+                        "title": result.get("title", "")
+                    }
+                elif action == "screenshot":
+                    # TODO: 实现截图功能
+                    return {
+                        "url": url,
+                        "action": action,
+                        "note": "Screenshot not yet implemented"
+                    }
+                else:
+                    return {
+                        "error": f"Unsupported browser action: {action}",
+                        "supported_actions": ["goto", "get_html", "screenshot"]
+                    }
+                    
+            except Exception as e:
+                return {
+                    "error": f"Browser operation failed: {str(e)}"
+                }
+            
         # 注册处理器
         self.tool_executor.register_handler("execute_command", execute_command)
         self.tool_executor.register_handler("read_file", read_file)
         self.tool_executor.register_handler("write_file", write_file)
         self.tool_executor.register_handler("list_directory", list_directory)
         self.tool_executor.register_handler("search_memory", search_memory)
+        self.tool_executor.register_handler("browser_navigate", browser_navigate)
         
     def set_model_client(self, client: ModelClient):
         """设置模型客户端"""
@@ -209,8 +299,6 @@ class AgentEngine:
         # 如果客户端支持工具执行，设置工具执行器
         if hasattr(client, 'set_tool_executor'):
             client.set_tool_executor(self.tool_executor)
-        """设置模型客户端"""
-        self._model_client = client
         
     async def handle_message(self, request: MessageRequest) -> Message:
         """处理消息"""
@@ -320,8 +408,17 @@ class AgentEngine:
                 response_text = response.content
             
         except Exception as e:
-            logger.error(f"Model call error: {e}")
-
+            logger.error(f"Model call error: {e}", exc_info=True)
+            # 创建错误响应返回给用户
+            error_message = Message(
+                session_id=request.session_id,
+                role="assistant",
+                content=f"抱歉，处理您的请求时发生错误：{str(e)}",
+                channel=request.channel
+            )
+            session.add_message(error_message)
+            self.session_manager.save_session(session)
+            return error_message
             
         # 7. 添加助手消息
         assistant_message = Message(
@@ -373,23 +470,4 @@ class AgentEngine:
         )
         
         return response
-        """调用模型"""
-        if not self._model_client:
-            return "Model client not configured"
-            
-        # 构建消息
-        messages = [{"role": "system", "content": context.system_prompt}]
-        messages.extend(context.chat_history)
-        
-        # 获取工具定义
-        tools = context.tools if self.config.tools else None
-        
-        # 调用模型
-        response = await self._model_client.chat(
-            messages=messages,
-            tools=tools,
-            model=self.config.model_name
-        )
-        
-        return response.get("content", "")
 

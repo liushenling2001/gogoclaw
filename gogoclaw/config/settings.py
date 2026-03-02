@@ -8,8 +8,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 import json
 
 
-class ChannelConfig(BaseModel):
+class ChannelConfig(BaseSettings):
     """渠道配置"""
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__",
+        extra="ignore"
+    )
     enabled: bool = True
     whitelist: List[str] = Field(default_factory=list)
     dm_policy: str = "pairing"  # pairing, open, deny
@@ -17,8 +21,12 @@ class ChannelConfig(BaseModel):
     group_whitelist: List[str] = Field(default_factory=list)
 
 
-class ModelConfig(BaseModel):
+class ModelConfig(BaseSettings):
     """模型配置"""
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__",
+        extra="ignore"
+    )
     provider: str = "openai"  # openai, anthropic, google, ollama
     model_name: str = "gpt-4o"
     api_key: Optional[str] = None
@@ -27,8 +35,12 @@ class ModelConfig(BaseModel):
     max_tokens: int = 4096
 
 
-class AgentConfig(BaseModel):
+class AgentConfig(BaseSettings):
     """智能体配置"""
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__",
+        extra="ignore"
+    )
     agent_id: str = "main"
     name: str = "GogoClaw"
     model: ModelConfig = Field(default_factory=ModelConfig)
@@ -39,16 +51,24 @@ class AgentConfig(BaseModel):
     channels: Dict[str, ChannelConfig] = Field(default_factory=dict)
 
 
-class GatewayConfig(BaseModel):
+class GatewayConfig(BaseSettings):
     """网关配置"""
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__",
+        extra="ignore"
+    )
     host: str = "127.0.0.1"
     port: int = 18789
     auth_enabled: bool = False
     cors_origins: List[str] = Field(default_factory=lambda: ["*"])
 
 
-class MemoryConfig(BaseModel):
+class MemoryConfig(BaseSettings):
     """记忆配置"""
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__",
+        extra="ignore"
+    )
     provider: str = "sqlite"  # sqlite, qdrant, chroma
     vector_enabled: bool = True
     embedding_model: str = "text-embedding-3-small"

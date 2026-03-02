@@ -1,10 +1,16 @@
 """
-GogoClaw 模型客户端 - LangChain 集成
+GogoClaw 模型客户端 - 支持国内外主流模型提供商
+
+支持:
+- 国内：阿里云通义千问、智谱 AI、Kimi(月之暗面)
+- 本地：Ollama
+- 国外：OpenAI、Anthropic、Google
 """
 import json
 import logging
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +21,10 @@ class ModelResponse:
     content: str
     tool_calls: Optional[List[Dict[str, Any]]] = None
     finish_reason: str = "stop"
+    usage: Optional[Dict[str, int]] = None
 
 
-class ModelClient:
+class BaseModelClient:
     """模型客户端基类"""
     
     async def chat(
@@ -31,249 +38,597 @@ class ModelClient:
         raise NotImplementedError
 
 
-class LangChainClient(ModelClient):
-    """LangChain 模型客户端"""
+class DashScopeClient(BaseModelClient):
+    """阿里云通义千问客户端 (DashScope)"""
     
     def __init__(
         self,
-        provider: str = "openai",
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        model: str = "gpt-4o",
-        temperature: float = 0.7,
-        max_tokens: int = 4096
+        api_key: str,
+        model: str = "qwen-plus",
+        base_url: str = "https://dashscope.aliyuncs.com/api/v1",
+        **kwargs
     ):
-        self.provider = provider
         self.api_key = api_key
-        self.base_url = base_url
         self.model = model
-        self.temperature = temperature
-        self.max_tokens = max_tokens
-        self._client = None
-        self._tool_executor = None
-        
-    def _init_client(self):
-        """初始化 LangChain 客户端"""
-        if self._client is not None:
-            return
-            
-        try:
-            if self.provider == "openai":
-                from langchain_openai import ChatOpenAI
-                self._client = ChatOpenAI(
-                    model=self.model,
-                    api_key=self.api_key,
-                    base_url=self.base_url,
-                    temperature=self.temperature,
-                    max_tokens=self.max_tokens,
-                    streaming=True
-                )
-            elif self.provider == "anthropic":
-                from langchain_anthropic import ChatAnthropic
-                self._client = ChatAnthropic(
-                    model=self.model,
-                    anthropic_api_key=self.api_key,
-                    temperature=self.temperature,
-                    max_tokens=self.max_tokens
-                )
-            elif self.provider == "google":
-                from langchain_google_genai import ChatGoogleGenerativeAI
-                self._client = ChatGoogleGenerativeAI(
-                    model=self.model,
-                    google_api_key=self.api_key,
-                    temperature=self.temperature,
-                    max_tokens=self.max_tokens
-                )
-            elif self.provider == "ollama":
-                from langchain_ollama import ChatOllama
-                self._client = ChatOllama(
-                    model=self.model,
-                    base_url=self.base_url or "http://localhost:11434",
-                    temperature=self.temperature
-                )
-            else:
-                raise ValueError(f"Unknown provider: {self.provider}")
-                
-            logger.info(f"Initialized {self.provider} client with model {self.model}")
-            
-        except ImportError as e:
-            logger.warning(f"LangChain provider not installed: {e}")
-            self._client = None
-            
-    def set_tool_executor(self, executor):
-        """设置工具执行器"""
-        self._tool_executor = executor
+        self.base_url = base_url
+        self.timeout = kwargs.get("timeout", 60)
         
     async def chat(
         self,
         messages: List[Dict[str, str]],
         tools: Optional[List[Dict[str, Any]]] = None,
-        model: str = "gpt-4o",
-        max_tool_calls: int = 10,
+        model: Optional[str] = None,
         **kwargs
     ) -> ModelResponse:
-        """
-        发送聊天请求，支持工具调用循环
+        """调用通义千问 API"""
+        model = model or self.model
         
-        Args:
-            messages: 消息列表
-            tools: 工具定义列表
-            model: 模型名称
-            max_tool_calls: 最大工具调用次数
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": False
+        }
+        
+        # 添加工具支持
+        if tools:
+            payload["tools"] = tools
             
-        Returns:
-            ModelResponse: 包含内容或工具调用
-        """
-        self._init_client()
-        
-        if not self._client:
-            # Fallback: 返回模拟响应
-            return ModelResponse(
-                content="Model client not initialized. Please install langchain packages.",
-                finish_reason="error"
-            )
-            
-        # 转换消息格式
-        from langchain.schema import HumanMessage, SystemMessage, AIMessage, ToolMessage
-        
-        lc_messages = []
-        for msg in messages:
-            role = msg.get("role")
-            content = msg.get("content", "")
-            
-            if role == "system":
-                lc_messages.append(SystemMessage(content=content))
-            elif role == "user":
-                lc_messages.append(HumanMessage(content=content))
-            elif role == "assistant":
-                # 检查是否有工具调用
-                if msg.get("tool_calls"):
-                    # 转换为 AIMessage with tool calls
-                    from langchain.schema import AIMessage
-                    lc_messages.append(AIMessage(
-                        content=content,
-                        additional_kwargs={"tool_calls": msg.get("tool_calls")}
-                    ))
-                else:
-                    lc_messages.append(AIMessage(content=content))
-            elif role == "tool":
-                lc_messages.append(ToolMessage(
-                    content=content,
-                    tool_call_id=msg.get("tool_call_id", "")
-                ))
-        
-        # 绑定工具 (如果有)
-        from langchain.tools import Tool
-        from langchain.agents import AgentExecutor
-        
-        if tools and self._tool_executor:
-            # 将工具定义转换为 LangChain 工具
-            langchain_tools = []
-            for tool_def in tools:
-                func_def = tool_def.get("function", {})
-                tool_name = func_def.get("name")
-                tool_desc = func_def.get("description")
-                
-                # 创建异步工具函数
-                async def create_tool_handler(name: str):
-                    async def handler(**kwargs):
-                        return await self._tool_executor.execute(name, kwargs, trust_level="dm")
-                    return handler
-                    
-                langchain_tools.append(Tool(
-                    name=tool_name,
-                    description=tool_desc,
-                    func=None,  # 异步执行
-                    coroutine=create_tool_handler(tool_name)
-                ))
-                
-            # 使用 LangChain Agent
-            from langchain.agents import create_openai_functions_agent
-            
-            agent = create_openai_functions_agent(self._client, langchain_tools, lc_messages)
-            agent_executor = AgentExecutor(
-                agent=agent,
-                tools=langchain_tools,
-                max_iterations=max_tool_calls,
-                verbose=True
-            )
-            
-            try:
-                result = await agent_executor.ainvoke({})
-                return ModelResponse(
-                    content=result.get("output", ""),
-                    finish_reason="agent_finish"
-                )
-            except Exception as e:
-                logger.error(f"Agent execution error: {e}")
-                return ModelResponse(
-                    content=f"Error: {str(e)}",
-                    finish_reason="error"
-                )
-        
-        # 直接调用模型 (无工具)
         try:
-            response = await self._client.agenerate([lc_messages])
-            content = response.generations[0][0].text
-            
-            return ModelResponse(
-                content=content,
-                finish_reason="stop"
-            )
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/services/aigc/text-generation/generation",
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                # 解析响应
+                if "output" in data and "choices" in data["output"]:
+                    choice = data["output"]["choices"][0]
+                    message = choice.get("message", {})
+                    
+                    return ModelResponse(
+                        content=message.get("content", ""),
+                        tool_calls=message.get("tool_calls"),
+                        finish_reason=choice.get("finish_reason", "stop"),
+                        usage=data.get("usage")
+                    )
+                else:
+                    return ModelResponse(
+                        content="",
+                        finish_reason="error"
+                    )
+                    
         except Exception as e:
-            logger.error(f"Model call error: {e}")
+            logger.error(f"DashScope API error: {e}")
             return ModelResponse(
                 content=f"Error: {str(e)}",
                 finish_reason="error"
             )
 
 
-class MockClient(ModelClient):
-    """模拟客户端，用于测试"""
+class ZhipuClient(BaseModelClient):
+    """智谱 AI 客户端 (GLM)"""
     
-    def __init__(self, response_text: str = "Hello from mock client"):
-        self.response_text = response_text
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "glm-4",
+        base_url: str = "https://open.bigmodel.cn/api/paas/v4",
+        **kwargs
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.base_url = base_url
+        self.timeout = kwargs.get("timeout", 60)
         
     async def chat(
         self,
         messages: List[Dict[str, str]],
         tools: Optional[List[Dict[str, Any]]] = None,
-        model: str = "mock",
+        model: Optional[str] = None,
         **kwargs
     ) -> ModelResponse:
-        """返回模拟响应"""
-        return ModelResponse(
-            content=self.response_text,
-            finish_reason="stop"
-        )
+        """调用智谱 AI API"""
+        model = model or self.model
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": False
+        }
+        
+        if tools:
+            payload["tools"] = tools
+            
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                choice = data.get("choices", [{}])[0]
+                message = choice.get("message", {})
+                
+                return ModelResponse(
+                    content=message.get("content", ""),
+                    tool_calls=message.get("tool_calls"),
+                    finish_reason=choice.get("finish_reason", "stop"),
+                    usage=data.get("usage")
+                )
+                    
+        except Exception as e:
+            logger.error(f"Zhipu API error: {e}")
+            return ModelResponse(
+                content=f"Error: {str(e)}",
+                finish_reason="error"
+            )
+
+
+class KimiClient(BaseModelClient):
+    """Kimi (月之暗面) 客户端"""
+    
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "moonshot-v1-8k",
+        base_url: str = "https://api.moonshot.cn/v1",
+        **kwargs
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.base_url = base_url
+        self.timeout = kwargs.get("timeout", 60)
+        
+    async def chat(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        model: Optional[str] = None,
+        **kwargs
+    ) -> ModelResponse:
+        """调用 Kimi API"""
+        model = model or self.model
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": False
+        }
+        
+        if tools:
+            payload["tools"] = tools
+            
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                choice = data.get("choices", [{}])[0]
+                message = choice.get("message", {})
+                
+                return ModelResponse(
+                    content=message.get("content", ""),
+                    tool_calls=message.get("tool_calls"),
+                    finish_reason=choice.get("finish_reason", "stop"),
+                    usage=data.get("usage")
+                )
+                    
+        except Exception as e:
+            logger.error(f"Kimi API error: {e}")
+            return ModelResponse(
+                content=f"Error: {str(e)}",
+                finish_reason="error"
+            )
+
+
+class OllamaClient(BaseModelClient):
+    """Ollama 本地模型客户端"""
+    
+    def __init__(
+        self,
+        model: str = "llama3.2",
+        base_url: str = "http://localhost:11434",
+        **kwargs
+    ):
+        self.model = model
+        self.base_url = base_url
+        self.timeout = kwargs.get("timeout", 120)
+        
+    async def chat(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        model: Optional[str] = None,
+        **kwargs
+    ) -> ModelResponse:
+        """调用 Ollama API"""
+        model = model or self.model
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": False
+        }
+        
+        # Ollama 工具支持 (v0.1.30+)
+        if tools:
+            payload["tools"] = tools
+            
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/chat",
+                    json=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                message = data.get("message", {})
+                
+                return ModelResponse(
+                    content=message.get("content", ""),
+                    tool_calls=message.get("tool_calls"),
+                    finish_reason="stop" if data.get("done") else "length",
+                    usage=data.get("prompt_eval_count", {})
+                )
+                    
+        except Exception as e:
+            logger.error(f"Ollama API error: {e}")
+            return ModelResponse(
+                content=f"Error: {str(e)}",
+                finish_reason="error"
+            )
+
+
+class OpenAIClient(BaseModelClient):
+    """OpenAI 客户端"""
+    
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gpt-4o",
+        base_url: Optional[str] = None,
+        **kwargs
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.base_url = base_url or "https://api.openai.com/v1"
+        self.timeout = kwargs.get("timeout", 60)
+        
+    async def chat(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        model: Optional[str] = None,
+        **kwargs
+    ) -> ModelResponse:
+        """调用 OpenAI API"""
+        model = model or self.model
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": False
+        }
+        
+        if tools:
+            payload["tools"] = tools
+            
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                choice = data.get("choices", [{}])[0]
+                message = choice.get("message", {})
+                
+                return ModelResponse(
+                    content=message.get("content", ""),
+                    tool_calls=message.get("tool_calls"),
+                    finish_reason=choice.get("finish_reason", "stop"),
+                    usage=data.get("usage")
+                )
+                    
+        except Exception as e:
+            logger.error(f"OpenAI API error: {e}")
+            return ModelResponse(
+                content=f"Error: {str(e)}",
+                finish_reason="error"
+            )
+
+
+class AnthropicClient(BaseModelClient):
+    """Anthropic (Claude) 客户端"""
+    
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "claude-3-5-sonnet-20241022",
+        base_url: str = "https://api.anthropic.com",
+        **kwargs
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.base_url = base_url
+        self.timeout = kwargs.get("timeout", 60)
+        
+    async def chat(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        model: Optional[str] = None,
+        **kwargs
+    ) -> ModelResponse:
+        """调用 Anthropic API"""
+        model = model or self.model
+        
+        headers = {
+            "x-api-key": self.api_key,
+            "Content-Type": "application/json",
+            "anthropic-version": "2023-06-01"
+        }
+        
+        # 转换消息格式 (Anthropic 格式)
+        system_message = ""
+        anthropic_messages = []
+        
+        for msg in messages:
+            if msg["role"] == "system":
+                system_message = msg["content"]
+            else:
+                anthropic_messages.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
+        
+        payload = {
+            "model": model,
+            "messages": anthropic_messages,
+            "max_tokens": 4096,
+            "stream": False
+        }
+        
+        if system_message:
+            payload["system"] = system_message
+            
+        if tools:
+            payload["tools"] = tools
+            
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/v1/messages",
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                # 解析响应
+                content_blocks = data.get("content", [])
+                text_content = ""
+                tool_calls = []
+                
+                for block in content_blocks:
+                    if block.get("type") == "text":
+                        text_content += block.get("text", "")
+                    elif block.get("type") == "tool_use":
+                        tool_calls.append({
+                            "id": block.get("id"),
+                            "function": {
+                                "name": block.get("name"),
+                                "arguments": json.dumps(block.get("input", {}))
+                            }
+                        })
+                
+                return ModelResponse(
+                    content=text_content,
+                    tool_calls=tool_calls if tool_calls else None,
+                    finish_reason=data.get("stop_reason", "stop"),
+                    usage=data.get("usage")
+                )
+                    
+        except Exception as e:
+            logger.error(f"Anthropic API error: {e}")
+            return ModelResponse(
+                content=f"Error: {str(e)}",
+                finish_reason="error"
+            )
+
+
+class GoogleClient(BaseModelClient):
+    """Google (Gemini) 客户端"""
+    
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gemini-1.5-pro",
+        base_url: str = "https://generativelanguage.googleapis.com/v1beta",
+        **kwargs
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.base_url = base_url
+        self.timeout = kwargs.get("timeout", 60)
+        
+    async def chat(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        model: Optional[str] = None,
+        **kwargs
+    ) -> ModelResponse:
+        """调用 Google Gemini API"""
+        model = model or self.model
+        
+        # 转换消息格式 (Gemini 格式)
+        contents = []
+        system_instruction = None
+        
+        for msg in messages:
+            if msg["role"] == "system":
+                system_instruction = msg["content"]
+            else:
+                role = "user" if msg["role"] == "user" else "model"
+                contents.append({
+                    "role": role,
+                    "parts": [{"text": msg["content"]}]
+                })
+        
+        payload = {
+            "contents": contents
+        }
+        
+        if system_instruction:
+            payload["systemInstruction"] = {
+                "parts": [{"text": system_instruction}]
+            }
+        
+        # 工具支持
+        if tools:
+            payload["tools"] = [{
+                "functionDeclarations": [
+                    {
+                        "name": t["function"]["name"],
+                        "description": t["function"]["description"],
+                        "parameters": t["function"]["parameters"]
+                    }
+                    for t in tools
+                ]
+            }]
+        
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/models/{model}:generateContent",
+                    params={"key": self.api_key},
+                    json=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                # 解析响应
+                candidates = data.get("candidates", [])
+                if candidates:
+                    content = candidates[0].get("content", {})
+                    parts = content.get("parts", [])
+                    
+                    text_content = ""
+                    tool_calls = []
+                    
+                    for part in parts:
+                        if "text" in part:
+                            text_content += part["text"]
+                        elif "functionCall" in part:
+                            tool_calls.append({
+                                "id": part["functionCall"].get("name", ""),
+                                "function": {
+                                    "name": part["functionCall"].get("name"),
+                                    "arguments": json.dumps(part["functionCall"].get("args", {}))
+                                }
+                            })
+                    
+                    return ModelResponse(
+                        content=text_content,
+                        tool_calls=tool_calls if tool_calls else None,
+                        finish_reason=candidates[0].get("finishReason", "stop")
+                    )
+                else:
+                    return ModelResponse(
+                        content="",
+                        finish_reason="error"
+                    )
+                    
+        except Exception as e:
+            logger.error(f"Google API error: {e}")
+            return ModelResponse(
+                content=f"Error: {str(e)}",
+                finish_reason="error"
+            )
 
 
 def create_model_client(
-    provider: str = "openai",
+    provider: str,
     api_key: Optional[str] = None,
+    model: Optional[str] = None,
     base_url: Optional[str] = None,
-    model: str = "gpt-4o",
     **kwargs
-) -> ModelClient:
+) -> BaseModelClient:
     """
     创建模型客户端工厂函数
     
     Args:
-        provider: 模型提供商 (openai, anthropic, google, ollama)
+        provider: 模型提供商 (dashscope, zhipu, kimi, ollama, openai, anthropic, google)
         api_key: API Key
-        base_url: 自定义 API 地址
         model: 模型名称
+        base_url: 自定义 API 地址
         
     Returns:
-        ModelClient: 模型客户端实例
+        BaseModelClient: 模型客户端实例
     """
-    if provider == "mock":
-        return MockClient(kwargs.get("mock_response", "Mock response"))
-        
-    return LangChainClient(
-        provider=provider,
-        api_key=api_key,
-        base_url=base_url,
-        model=model,
-        **kwargs
-    )
+    provider = provider.lower()
+    
+    clients = {
+        "dashscope": DashScopeClient,
+        "aliyun": DashScopeClient,
+        "zhipu": ZhipuClient,
+        "glm": ZhipuClient,
+        "kimi": KimiClient,
+        "moonshot": KimiClient,
+        "ollama": OllamaClient,
+        "openai": OpenAIClient,
+        "anthropic": AnthropicClient,
+        "claude": AnthropicClient,
+        "google": GoogleClient,
+        "gemini": GoogleClient,
+    }
+    
+    client_class = clients.get(provider)
+    if not client_class:
+        raise ValueError(f"Unknown provider: {provider}. Available: {list(clients.keys())}")
+    
+    # 准备参数
+    init_kwargs = {"api_key": api_key} if api_key else {}
+    if model:
+        init_kwargs["model"] = model
+    if base_url:
+        init_kwargs["base_url"] = base_url
+    init_kwargs.update(kwargs)
+    
+    return client_class(**init_kwargs)
