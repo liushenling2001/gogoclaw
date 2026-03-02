@@ -1,0 +1,16 @@
+# GogoClaw Web UI 依赖
+# 安装：pip install -r requirements.txt
+
+# FastAPI 框架
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# 数据验证
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# CORS 支持
+python-multipart>=0.0.6
+
+# GogoClaw (本地)
+# 通过父目录安装，不需要单独列出

@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GogoClaw Web UI</title>
+    
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- Element Plus -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    
+    <!-- Markdown 渲染 -->
+    <script src="https://unpkg.com/marked/marked.min.js"></script>
+    
+    <!-- 代码高亮 -->
+    <link rel="stylesheet" href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.css">
+    <script src="https://unpkg.com/prismjs@1.29.0/prism.js"></script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-python.js"></script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-javascript.js"></script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-typescript.js"></script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-bash.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .header-nav {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* 主内容区 */
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* 配置页面 */
+        .config-page {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .config-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        
+        .config-card h3 {
+            margin-bottom: 20px;
+            color: #303133;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .form-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .form-item label {
+            font-size: 13px;
+            color: #606266;
+            font-weight: 500;
+        }
+        
+        .form-item small {
+            font-size: 11px;
+            color: #909399;
+        }
+        
+        /* 聊天页面 */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* 侧边栏 - 对话列表 */
+        .chat-sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e4e7ed;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #e4e7ed;
+        }
+        
+        .session-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .session-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        
+        .session-item:hover {
+            background: #f5f7fa;
+        }
+        
+        .session-item.active {
+            background: #ecf5ff;
+            border-left: 3px solid #409eff;
+        }
+        
+        .session-title {
+            font-size: 14px;
+            color: #303133;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .session-time {
+            font-size: 12px;
+            color: #909399;
+        }
+        
+        /* 聊天窗口 */
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f5f7fa;
+        }
+        
+        .chat-header {
+            padding: 16px 24px;
+            background: white;
+            border-bottom: 1px solid #e4e7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: #409eff;
+            margin-left: 12px;
+        }
+        
+        .message.assistant .message-avatar {
+            margin-right: 12px;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.6;
+        }
+        
+        .message.user .message-content {
+            background: #409eff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.assistant .message-content {
+            background: white;
+            color: #303133;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        /* Markdown 样式 */
+        .message-content :deep(p) {
+            margin-bottom: 8px;
+        }
+        
+        .message-content :deep(p:last-child) {
+            margin-bottom: 0;
+        }
+        
+        .message-content :deep(pre) {
+            background: #282c34;
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+        
+        .message-content :deep(code) {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+        
+        .message-content :deep(:not(pre) > code) {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .message.user .message-content :deep(:not(pre) > code) {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* 工具调用指示器 */
+        .tool-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #f0f9ff;
+            border: 1px solid #bae7ff;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #1890ff;
+            margin-bottom: 12px;
+        }
+        
+        .tool-indicator .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #1890ff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 输入区域 */
+        .chat-input-area {
+            padding: 16px 24px;
+            background: white;
+            border-top: 1px solid #e4e7ed;
+        }
+        
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        
+        .input-box {
+            flex: 1;
+        }
+        
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-badge.enabled {
+            background: #f0f9ff;
+            color: #1890ff;
+        }
+        
+        .status-badge.disabled {
+            background: #f5f5f5;
+            color: #909399;
+        }
+        
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航 -->
+        <header class="header">
+            <h1>🦾 GogoClaw Web UI</h1>
+            <nav class="header-nav">
+                <button 
+                    class="nav-btn" 
+                    :class="{ active: currentPage === 'config' }"
+                    @click="currentPage = 'config'"
+                >
+                    ⚙️ 配置管理
+                </button>
+                <button 
+                    class="nav-btn" 
+                    :class="{ active: currentPage === 'chat' }"
+                    @click="currentPage = 'chat'; initWebSocket()"
+                >
+                    💬 智能对话
+                </button>
+            </nav>
+        </header>
+        
+        <!-- 主内容区 -->
+        <div class="main-container">
+            <!-- 配置管理页面 -->
+            <div v-if="currentPage === 'config'" class="config-page">
+                <!-- API Key 配置 -->
+                <div class="config-card">
+                    <h3>🔑 API Key 配置</h3>
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>模型服务商</label>
+                            <el-select v-model="config.model.provider" placeholder="选择服务商" style="width: 100%;">
+                                <el-option label="OpenAI" value="openai"></el-option>
+                                <el-option label="Anthropic" value="anthropic"></el-option>
+                                <el-option label="Google" value="google"></el-option>
+                                <el-option label="Ollama (本地)" value="ollama"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="form-item">
+                            <label>模型名称</label>
+                            <el-select v-model="config.model.model_name" placeholder="选择模型" style="width: 100%;" filterable allow-create>
+                                <el-option 
+                                    v-for="model in availableModels" 
+                                    :key="model.model_name"
+                                    :label="model.display_name"
+                                    :value="model.model_name"
+                                    v-if="model.provider === config.model.provider || config.model.provider === 'all'"
+                                ></el-option>
+                            </el-select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-item" style="flex: 2;">
+                            <label>API Key</label>
+                            <el-input 
+                                v-model="config.model.api_key" 
+                                type="password"
+                                placeholder="输入 API Key"
+                                show-password
+                            >
+                                <template #append>
+                                    <el-button @click="testApiKey">测试</el-button>
+                                </template>
+                            </el-input>
+                            <small v-if="testResult">{{ testResult }}</small>
+                        </div>
+                        <div class="form-item">
+                            <label>Base URL (可选)</label>
+                            <el-input v-model="config.model.base_url" placeholder="https://api.openai.com/v1"></el-input>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 渠道开关 -->
+                <div class="config-card">
+                    <h3>📡 渠道管理</h3>
+                    <div class="form-row">
+                        <div class="form-item" v-for="channel in channels" :key="channel.id">
+                            <label>
+                                <el-switch v-model="channel.enabled"></el-switch>
+                                {{ channel.name }}
+                            </label>
+                            <span class="status-badge" :class="channel.enabled ? 'enabled' : 'disabled'">
+                                {{ channel.enabled ? '已启用' : '已禁用' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 高级设置 -->
+                <div class="config-card">
+                    <h3>⚙️ 高级设置</h3>
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>Temperature ({{ config.temperature }})</label>
+                            <el-slider v-model="config.temperature" :min="0" :max="2" :step="0.1"></el-slider>
+                            <small>控制随机性：越低越确定，越高越有创意</small>
+                        </div>
+                        <div class="form-item">
+                            <label>Max Tokens</label>
+                            <el-input-number v-model="config.max_tokens" :min="256" :max="128000" :step="256" style="width: 100%;"></el-input-number>
+                            <small>单次响应最大 token 数</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>
+                                <el-switch v-model="config.sandbox_enabled"></el-switch>
+                                沙盒模式
+                            </label>
+                            <small>启用代码执行沙盒，提高安全性</small>
+                        </div>
+                        <div class="form-item">
+                            <label>工具集</label>
+                            <el-select v-model="config.tools" multiple placeholder="选择工具" style="width: 100%;">
+                                <el-option label="命令执行" value="command"></el-option>
+                                <el-option label="浏览器" value="browser"></el-option>
+                                <el-option label="文件操作" value="file"></el-option>
+                                <el-option label="网络搜索" value="web_fetch"></el-option>
+                            </el-select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 保存按钮 -->
+                <div style="text-align: center; margin-top: 24px;">
+                    <el-button type="primary" size="large" @click="saveConfig" :loading="saving">
+                        💾 保存配置
+                    </el-button>
+                    <el-button size="large" @click="loadConfig">
+                        🔄 重新加载
+                    </el-button>
+                </div>
+            </div>
+            
+            <!-- 聊天页面 -->
+            <div v-if="currentPage === 'chat'" class="chat-container">
+                <!-- 侧边栏 -->
+                <aside class="chat-sidebar">
+                    <div class="sidebar-header">
+                        <el-button type="primary" style="width: 100%;" @click="newChat">
+                            + 新建对话
+                        </el-button>
+                    </div>
+                    <div class="session-list">
+                        <div 
+                            v-for="session in sessions" 
+                            :key="session.id"
+                            class="session-item"
+                            :class="{ active: currentSession === session.id }"
+                            @click="selectSession(session.id)"
+                        >
+                            <div class="session-title">{{ session.title }}</div>
+                            <div class="session-time">{{ session.time }}</div>
+                        </div>
+                    </div>
+                </aside>
+                
+                <!-- 聊天窗口 -->
+                <main class="chat-window">
+                    <header class="chat-header">
+                        <h3>{{ currentSessionTitle }}</h3>
+                        <el-button size="small" @click="clearMessages">🗑️ 清空对话</el-button>
+                    </header>
+                    
+                    <div class="chat-messages" ref="messageContainer">
+                        <!-- 工具调用指示器 -->
+                        <div v-if="isProcessing" class="tool-indicator">
+                            <div class="spinner"></div>
+                            <span>{{ toolStatus }}</span>
+                        </div>
+                        
+                        <!-- 消息列表 -->
+                        <div 
+                            v-for="(msg, index) in messages" 
+                            :key="index"
+                            class="message"
+                            :class="msg.role"
+                        >
+                            <div class="message-avatar">
+                                {{ msg.role === 'user' ? '👤' : '🤖' }}
+                            </div>
+                            <div class="message-content" v-html="renderMarkdown(msg.content)"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 输入区域 -->
+                    <div class="chat-input-area">
+                        <div class="input-wrapper">
+                            <div class="input-box">
+                                <el-input
+                                    v-model="inputMessage"
+                                    type="textarea"
+                                    :rows="2"
+                                    placeholder="输入消息... (Shift+Enter 换行)"
+                                    @keydown.enter.exact="sendMessage"
+                                    :disabled="isProcessing"
+                                ></el-input>
+                            </div>
+                            <button 
+                                class="send-btn"
+                                @click="sendMessage"
+                                :disabled="!inputMessage.trim() || isProcessing"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const { createApp, ref, reactive, onMounted, nextTick, watch } = Vue;
+        
+        createApp({
+            setup() {
+                // 页面状态
+                const currentPage = ref('config');
+                const saving = ref(false);
+                const testResult = ref('');
+                
+                // 配置数据
+                const config = reactive({
+                    model: {
+                        provider: 'openai',
+                        model_name: 'gpt-4o',
+                        api_key: '',
+                        base_url: ''
+                    },
+                    temperature: 0.7,
+                    max_tokens: 4096,
+                    sandbox_enabled: true,
+                    tools: ['command', 'browser', 'file']
+                });
+                
+                // 可用模型
+                const availableModels = ref([]);
+                
+                // 渠道列表
+                const channels = ref([
+                    { id: 'telegram', name: 'Telegram', enabled: false },
+                    { id: 'discord', name: 'Discord', enabled: false },
+                    { id: 'feishu', name: '飞书', enabled: false },
+                    { id: 'dingtalk', name: '钉钉', enabled: false },
+                    { id: 'whatsapp', name: 'WhatsApp', enabled: false }
+                ]);
+                
+                // 聊天数据
+                const sessions = ref([
+                    { id: '1', title: '欢迎使用 GogoClaw', time: '刚刚' }
+                ]);
+                const currentSession = ref('1');
+                const messages = ref([]);
+                const inputMessage = ref('');
+                const isProcessing = ref(false);
+                const toolStatus = ref('正在思考...');
+                const messageContainer = ref(null);
+                
+                // WebSocket
+                let ws = null;
+                let streamingContent = '';
+                
+                // API 基础 URL
+                const API_BASE = window.location.origin;
+                
+                // 加载配置
+                const loadConfig = async () => {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/config`);
+                        const data = await res.json();
+                        
+                        if (data.agents && data.agents.main) {
+                            const agent = data.agents.main;
+                            config.model.provider = agent.model?.provider || 'openai';
+                            config.model.model_name = agent.model?.model_name || 'gpt-4o';
+                            config.model.api_key = agent.model?.api_key || '';
+                            config.model.base_url = agent.model?.base_url || '';
+                            config.temperature = agent.model?.temperature || 0.7;
+                            config.max_tokens = agent.model?.max_tokens || 4096;
+                            config.sandbox_enabled = agent.sandbox_enabled ?? true;
+                            config.tools = agent.tools || ['command', 'browser', 'file'];
+                        }
+                        
+                        ElementPlus.ElMessage.success('配置加载成功');
+                    } catch (err) {
+                        console.error('加载配置失败:', err);
+                        ElementPlus.ElMessage.warning('使用默认配置');
+                    }
+                };
+                
+                // 加载可用模型
+                const loadModels = async () => {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/config/models`);
+                        const data = await res.json();
+                        availableModels.value = data.models || [];
+                    } catch (err) {
+                        console.error('加载模型列表失败:', err);
+                    }
+                };
+                
+                // 测试 API Key
+                const testApiKey = async () => {
+                    if (!config.model.api_key) {
+                        testResult.value = '⚠️ 请输入 API Key';
+                        return;
+                    }
+                    
+                    try {
+                        const res = await fetch(`${API_BASE}/api/config/test`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                provider: config.model.provider,
+                                api_key: config.model.api_key,
+                                model_name: config.model.model_name
+                            })
+                        });
+                        const data = await res.json();
+                        
+                        testResult.value = data.success 
+                            ? `✅ ${data.message}` 
+                            : `❌ ${data.message}`;
+                    } catch (err) {
+                        testResult.value = `❌ 测试失败：${err.message}`;
+                    }
+                };
+                
+                // 保存配置
+                const saveConfig = async () => {
+                    saving.value = true;
+                    try {
+                        const res = await fetch(`${API_BASE}/api/config`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                agent_id: 'main',
+                                model: config.model,
+                                temperature: config.temperature,
+                                max_tokens: config.max_tokens,
+                                sandbox_enabled: config.sandbox_enabled,
+                                tools: config.tools,
+                                channels: Object.fromEntries(
+                                    channels.value.map(c => [c.id, { enabled: c.enabled }])
+                                )
+                            })
+                        });
+                        
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            ElementPlus.ElMessage.success('配置保存成功');
+                        } else {
+                            ElementPlus.ElMessage.error('保存失败');
+                        }
+                    } catch (err) {
+                        ElementPlus.ElMessage.error(`保存失败：${err.message}`);
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // 初始化 WebSocket
+                const initWebSocket = () => {
+                    if (ws && ws.readyState === WebSocket.OPEN) return;
+                    
+                    const wsUrl = `ws://${window.location.hostname}:18790/ws?client_id=${Date.now()}`;
+                    ws = new WebSocket(wsUrl);
+                    
+                    ws.onopen = () => {
+                        console.log('WebSocket 已连接');
+                    };
+                    
+                    ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    };
+                    
+                    ws.onerror = (err) => {
+                        console.error('WebSocket 错误:', err);
+                    };
+                    
+                    ws.onclose = () => {
+                        console.log('WebSocket 已断开');
+                        setTimeout(initWebSocket, 3000);
+                    };
+                };
+                
+                // 处理 WebSocket 消息
+                const handleWebSocketMessage = (data) => {
+                    switch (data.type) {
+                        case 'tool_call':
+                            isProcessing.value = true;
+                            toolStatus.value = data.message || '正在处理...';
+                            break;
+                            
+                        case 'stream_start':
+                            streamingContent = '';
+                            messages.value.push({
+                                role: 'assistant',
+                                content: ''
+                            });
+                            break;
+                            
+                        case 'stream_chunk':
+                            streamingContent += data.content;
+                            if (messages.value.length > 0) {
+                                messages.value[messages.value.length - 1].content = streamingContent;
+                                scrollToBottom();
+                            }
+                            break;
+                            
+                        case 'stream_end':
+                            isProcessing.value = false;
+                            toolStatus.value = '完成';
+                            scrollToBottom();
+                            break;
+                            
+                        case 'message':
+                            if (data.data) {
+                                messages.value.push({
+                                    role: 'assistant',
+                                    content: data.data.content || data.data.response || ''
+                                });
+                                scrollToBottom();
+                            }
+                            break;
+                    }
+                };
+                
+                // 发送消息
+                const sendMessage = () => {
+                    if (!inputMessage.value.trim() || isProcessing.value) return;
+                    
+                    const content = inputMessage.value.trim();
+                    messages.value.push({
+                        role: 'user',
+                        content: content
+                    });
+                    
+                    inputMessage.value = '';
+                    scrollToBottom();
+                    
+                    // 通过 WebSocket 发送
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'chat',
+                            content: content,
+                            session_id: currentSession.value
+                        }));
+                    } else {
+                        // 降级：直接显示模拟响应
+                        setTimeout(() => {
+                            messages.value.push({
+                                role: 'assistant',
+                                content: `收到：${content}\n\n(WebSocket 未连接，这是模拟响应)`
+                            });
+                            scrollToBottom();
+                        }, 500);
+                    }
+                };
+                
+                // 渲染 Markdown
+                const renderMarkdown = (text) => {
+                    if (!text) return '';
+                    return marked.parse(text);
+                };
+                
+                // 滚动到底部
+                const scrollToBottom = async () => {
+                    await nextTick();
+                    if (messageContainer.value) {
+                        messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
+                    }
+                };
+                
+                // 新建对话
+                const newChat = () => {
+                    const id = Date.now().toString();
+                    sessions.value.unshift({
+                        id,
+                        title: '新对话',
+                        time: '刚刚'
+                    });
+                    currentSession.value = id;
+                    messages.value = [];
+                };
+                
+                // 选择会话
+                const selectSession = (id) => {
+                    currentSession.value = id;
+                    // 实际应从后端加载历史消息
+                    messages.value = [];
+                };
+                
+                // 清空消息
+                const clearMessages = () => {
+                    messages.value = [];
+                };
+                
+                // 计算属性
+                const currentSessionTitle = computed(() => {
+                    const session = sessions.value.find(s => s.id === currentSession.value);
+                    return session ? session.title : '对话';
+                });
+                
+                // 生命周期
+                onMounted(() => {
+                    loadConfig();
+                    loadModels();
+                });
+                
+                return {
+                    currentPage,
+                    config,
+                    availableModels,
+                    channels,
+                    saving,
+                    testResult,
+                    sessions,
+                    currentSession,
+                    messages,
+                    inputMessage,
+                    isProcessing,
+                    toolStatus,
+                    messageContainer,
+                    loadConfig,
+                    loadModels,
+                    testApiKey,
+                    saveConfig,
+                    initWebSocket,
+                    sendMessage,
+                    renderMarkdown,
+                    newChat,
+                    selectSession,
+                    clearMessages,
+                    currentSessionTitle
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
