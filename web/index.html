@@ -5,24 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GogoClaw Web UI</title>
     
-    <!-- Vue 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Vue 3 (国内镜像 - 生产版本) -->
+    <script src="https://cdn.staticfile.org/vue/3.3.4/vue.global.prod.js"></script>
     
-    <!-- Element Plus -->
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <script src="https://unpkg.com/element-plus"></script>
-    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <!-- Element Plus (国内镜像) -->
+    <link rel="stylesheet" href="https://cdn.staticfile.org/element-plus/2.4.4/index.css">
+    <script src="https://cdn.staticfile.org/element-plus/2.4.4/index.full.min.js"></script>
+    <script src="https://cdn.staticfile.org/element-plus-icons-vue/2.1.0/global.min.js"></script>
     
-    <!-- Markdown 渲染 -->
-    <script src="https://unpkg.com/marked/marked.min.js"></script>
+    <!-- Markdown 渲染 (国内镜像) -->
+    <script src="https://cdn.staticfile.org/marked/9.1.6/marked.min.js"></script>
     
-    <!-- 代码高亮 -->
-    <link rel="stylesheet" href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.css">
-    <script src="https://unpkg.com/prismjs@1.29.0/prism.js"></script>
-    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-python.js"></script>
-    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-javascript.js"></script>
-    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-typescript.js"></script>
-    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-bash.js"></script>
+    <!-- 代码高亮 (国内镜像) -->
+    <link rel="stylesheet" href="https://cdn.staticfile.org/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdn.staticfile.org/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdn.staticfile.org/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdn.staticfile.org/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdn.staticfile.org/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdn.staticfile.org/prism/1.29.0/components/prism-bash.min.js"></script>
     
     <style>
         * {
@@ -631,7 +631,7 @@
     </div>
     
     <script>
-        const { createApp, ref, reactive, onMounted, nextTick, watch } = Vue;
+        const { createApp, ref, reactive, onMounted, nextTick, watch, computed } = Vue;
         
         createApp({
             setup() {
@@ -784,7 +784,7 @@
                 const initWebSocket = () => {
                     if (ws && ws.readyState === WebSocket.OPEN) return;
                     
-                    const wsUrl = `ws://${window.location.hostname}:18790/ws?client_id=${Date.now()}`;
+                    const wsUrl = `ws://${window.location.host}/ws?client_id=${Date.now()}`;
                     ws = new WebSocket(wsUrl);
                     
                     ws.onopen = () => {
@@ -925,9 +925,13 @@
                 });
                 
                 // 生命周期
-                onMounted(() => {
-                    loadConfig();
-                    loadModels();
+                onMounted(async () => {
+                    try {
+                        await loadConfig();
+                        await loadModels();
+                    } catch (err) {
+                        console.error('初始化失败:', err);
+                    }
                 });
                 
                 return {

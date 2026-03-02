@@ -438,7 +438,7 @@ async def handle_chat_message(message: dict, websocket: WebSocket):
 
 # ==================== 启动 ====================
 
-def run_server(host: str = "0.0.0.0", port: int = 18790, reload: bool = False):
+def run_server(host: str = "0.0.0.0", port: int = 16889, reload: bool = False):
     """运行服务器"""
     uvicorn.run(
         "server:app",
@@ -450,4 +450,4 @@ def run_server(host: str = "0.0.0.0", port: int = 18790, reload: bool = False):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    run_server(host="0.0.0.0", port=18790, reload=True)
+    run_server(host="0.0.0.0", port=16889, reload=True)
