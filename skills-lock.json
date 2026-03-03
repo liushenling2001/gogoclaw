@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "github-triage": {
+      "source": "code-yeongyu/oh-my-opencode",
+      "sourceType": "github",
+      "computedHash": "21b6186d052e41a765eb4d1bc115ef3bb0ac10ef8627f98cea1c186e19ae8543"
+    }
+  }
+}

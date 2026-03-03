@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenClaw Gateway - 个性化控制台</title>
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦎</text></svg>" />
+  <style>
+    /* ==================== 主题变量 ==================== */
+    :root {
+      --primary-color: #6c42f5;
+      --primary-hover: #5b33d4;
+      --primary-light: rgba(108, 66, 245, 0.1);
+      --success-color: #26a641;
+      --warning-color: #f0ad4e;
+      --danger-color: #d9534f;
+      --info-color: #428bca;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --border-color: #e5e7eb;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      --transition-fast: 150ms ease;
+      --transition-normal: 250ms ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+        --text-tertiary: #9ca3af;
+        --bg-primary: #1f2937;
+        --bg-secondary: #111827;
+        --bg-tertiary: #374151;
+        --border-color: #4b5563;
+      }
+    }
+
+    /* ==================== 全局样式 ==================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ==================== 导航栏 ==================== */
+    .navbar {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+      box-shadow: var(--shadow-md);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .navbar-content {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+
+    .navbar-brand-icon {
+      font-size: 2rem;
+    }
+
+    .navbar-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.9rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: var(--radius-full);
+      background: #24e08a;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ==================== 主内容区 ==================== */
+    .main-content {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    /* ==================== 统计卡片网格 ==================== */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-primary);
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      transition: all var(--transition-normal);
+    }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .stat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .stat-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .stat-card-icon.primary {
+      background: var(--primary-light);
+      color: var(--primary-color);
+    }
+
+    .stat-card-icon.success {
+      background: #dcfce7;
+      color: var(--success-color);
+    }
+
+    .stat-card-icon.warning {
+      background: #fef3c7;
+      color: var(--warning-color);
+    }
+
+    .stat-card-icon.info {
+      background: #dbeafe;
+      color: var(--info-color);
+    }
+
+    .stat-card-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-card-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .stat-card-change {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 0.85rem;
+    }
+
+    .stat-card-change.positive {
+      color: var(--success-color);
+    }
+
+    .stat-card-change.negative {
+      color: var(--danger-color);
+    }
+
+    /* ==================== 内容网格 ==================== */
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ==================== 卡片组件 ==================== */
+    .card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .card-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    /* ==================== 按钮 ==================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-color);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    /* ==================== 状态徽章 ==================== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-success {
+      background: #dcfce7;
+      color: var(--success-color);
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: var(--warning-color);
+    }
+
+    .badge-danger {
+      background: #fee2e2;
+      color: var(--danger-color);
+    }
+
+    .badge-info {
+      background: #dbeafe;
+      color: var(--info-color);
+    }
+
+    .badge-primary {
+      background: var(--primary-light);
+      color: var(--primary-color);
+    }
+
+    /* ==================== 列表 ==================== */
+    .list {
+      list-style: none;
+    }
+
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-item-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .list-item-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ==================== 日志区域 ==================== */
+    .log-container {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .log-line {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .log-line:last-child {
+      border-bottom: none;
+    }
+
+    .log-time {
+      color: var(--text-tertiary);
+      margin-right: 8px;
+    }
+
+    .log-info { color: var(--info-color); }
+    .log-success { color: var(--success-color); }
+    .log-warning { color: var(--warning-color); }
+    .log-error { color: var(--danger-color); }
+
+    /* ==================== 进度条 ==================== */
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+      border-radius: var(--radius-full);
+      transition: width 0.3s ease;
+    }
+
+    /* ==================== 活动流 ==================== */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      transition: background var(--transition-fast);
+    }
+
+    .activity-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .activity-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.success {
+      background: #dcfce7;
+      color: var(--success-color);
+    }
+
+    .activity-icon.primary {
+      background: var(--primary-light);
+      color: var(--primary-color);
+    }
+
+    .activity-icon.warning {
+      background: #fef3c7;
+      color: var(--warning-color);
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-message {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .activity-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* ==================== 动画 ==================== */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    /* ==================== 响应式 ==================== */
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+
+      .main-content {
+        padding: 16px;
+      }
+
+      .page-title {
+        font-size: 1.5rem;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-card-value {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-brand">
+        <span class="navbar-brand-icon">🦎</span>
+        <span>OpenClaw Gateway</span>
+      </div>
+      <div class="navbar-status">
+        <div class="status-dot"></div>
+        <span>运行中</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 页面头部 -->
+    <div class="page-header animate-fade-in">
+      <h1 class="page-title">个性化控制台</h1>
+      <p class="page-subtitle">Gateway 状态监控与管理面板</p>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="dashboard-grid animate-fade-in">
+      <!-- Gateway 状态 -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-card-value" id="gateway-status">运行中</div>
+            <div class="stat-card-label">Gateway 状态</div>
+          </div>
+          <div class="stat-card-icon success">✅</div>
+        </div>
+        <div class="stat-card-change positive">
+          <span>PID: 249741</span>
+          <span>端口：18789</span>
+        </div>
+      </div>
+
+      <!-- 会话数量 -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-card-value" id="session-count">3</div>
+            <div class="stat-card-label">活跃会话</div>
+          </div>
+          <div class="stat-card-icon primary">💬</div>
+        </div>
+        <div class="stat-card-change positive">
+          <span>↑ 2</span>
+          <span>较上小时</span>
+        </div>
+      </div>
+
+      <!-- 扩展数量 -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-card-value" id="extension-count">5</div>
+            <div class="stat-card-label">已加载扩展</div>
+          </div>
+          <div class="stat-card-icon info">🔌</div>
+        </div>
+        <div class="stat-card-change">
+          <span>Feishu, DingTalk, QQBot...</span>
+        </div>
+      </div>
+
+      <!-- Token 使用 -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-card-value" id="token-usage">12.5K</div>
+            <div class="stat-card-label">今日 Token</div>
+          </div>
+          <div class="stat-card-icon warning">📊</div>
+        </div>
+        <div class="stat-card-change negative">
+          <span>↓ 8%</span>
+          <span>较昨日</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容网格 -->
+    <div class="content-grid">
+      <!-- 最近活动 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🕐 最近活动</span>
+          </div>
+          <button class="btn btn-outline btn-sm">查看全部</button>
+        </div>
+        <div class="card-body">
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon success">✓</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>Feishu 消息</strong> 发送成功
+                </div>
+                <div class="activity-meta">
+                  <span>ou_736c3390c340633be7998a82a91b2ec4</span>
+                  <span>2 分钟前</span>
+                </div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon primary">📝</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>扩展加载</strong> DingTalk Connector
+                </div>
+                <div class="activity-meta">
+                  <span>System</span>
+                  <span>10 分钟前</span>
+                </div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon warning">⚠️</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>API 警告</strong> DingTalk 文件下载 404
+                </div>
+                <div class="activity-meta">
+                  <span>dingggw1da7r6awmijhd</span>
+                  <span>1 小时前</span>
+                </div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon info">🔄</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>Gateway 重启</strong> 配置更新
+                </div>
+                <div class="activity-meta">
+                  <span>System</span>
+                  <span>2 小时前</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快速操作 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>⚡ 快速操作</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <button class="btn btn-primary" onclick="restartGateway()">
+              <span>🔄</span>
+              <span>重启 Gateway</span>
+            </button>
+            <button class="btn btn-secondary" onclick="checkStatus()">
+              <span>📊</span>
+              <span>检查状态</span>
+            </button>
+            <button class="btn btn-secondary" onclick="viewLogs()">
+              <span>📋</span>
+              <span>查看日志</span>
+            </button>
+            <button class="btn btn-secondary" onclick="reloadConfig()">
+              <span>⚙️</span>
+              <span>重载配置</span>
+            </button>
+            <button class="btn btn-outline" onclick="clearCache()">
+              <span>🗑️</span>
+              <span>清理缓存</span>
+            </button>
+            <button class="btn btn-outline" onclick="openSettings()">
+              <span>🔧</span>
+              <span>系统设置</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 扩展列表 -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🔌 已加载扩展</span>
+          </div>
+          <button class="btn btn-outline btn-sm">管理扩展</button>
+        </div>
+        <div class="card-body">
+          <ul class="list">
+            <li class="list-item">
+              <div class="list-item-label">
+                <span class="badge badge-success">运行中</span>
+                <strong>Feishu</strong>
+                <span style="color: var(--text-tertiary); font-size: 0.85rem;">v0.1.6</span>
+              </div>
+              <div class="list-item-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </li>
+            <li class="list-item">
+              <div class="list-item-label">
+                <span class="badge badge-success">运行中</span>
+                <strong>DingTalk Connector</strong>
+                <span style="color: var(--text-tertiary); font-size: 0.85rem;">v1.0.0</span>
+              </div>
+              <div class="list-item-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </li>
+            <li class="list-item">
+              <div class="list-item-label">
+                <span class="badge badge-success">运行中</span>
+                <strong>QQBot</strong>
+                <span style="color: var(--text-tertiary); font-size: 0.85rem;">v2.0.0</span>
+              </div>
+              <div class="list-item-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </li>
+            <li class="list-item">
+              <div class="list-item-label">
+                <span class="badge badge-warning">警告</span>
+                <strong>BlueBubbles</strong>
+                <span style="color: var(--text-tertiary); font-size: 0.85rem;">v0.9.0</span>
+              </div>
+              <div class="list-item-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </li>
+            <li class="list-item">
+              <div class="list-item-label">
+                <span class="badge badge-success">运行中</span>
+                <strong>Canvas</strong>
+                <span style="color: var(--text-tertiary); font-size: 0.85rem;">v1.0.0</span>
+              </div>
+              <div class="list-item-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 系统日志 -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">
+            <span>📜 系统日志</span>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="refreshLogs()">刷新</button>
+        </div>
+        <div class="card-body">
+          <div class="log-container" id="log-container">
+            <div class="log-line">
+              <span class="log-time">[16:02:45]</span>
+              <span class="log-success">[INFO]</span>
+              Gateway 重启成功 - PID: 249741
+            </div>
+            <div class="log-line">
+              <span class="log-time">[16:02:44]</span>
+              <span class="log-info">[INFO]</span>
+              Feishu WebSocket 连接已建立
+            </div>
+            <div class="log-line">
+              <span class="log-time">[16:02:43]</span>
+              <span class="log-info">[INFO]</span>
+              加载扩展：DingTalk Connector
+            </div>
+            <div class="log-line">
+              <span class="log-time">[16:02:42]</span>
+              <span class="log-warning">[WARN]</span>
+              DingTalk API 404: /v1.0/im/chatFiles/downloadUrls
+            </div>
+            <div class="log-line">
+              <span class="log-time">[16:02:41]</span>
+              <span class="log-info">[INFO]</span>
+              Gateway 服务启动 - 端口：18789
+            </div>
+            <div class="log-line">
+              <span class="log-time">[16:02:40]</span>
+              <span class="log-info">[INFO]</span>
+              读取配置文件：~/.openclaw/openclaw.json
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // 实时更新时间
+    function updateTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('zh-CN');
+      document.querySelectorAll('.log-time').forEach(el => {
+        if (el.dataset.original) {
+          el.textContent = `[${timeStr}]`;
+        }
+      });
+    }
+
+    // 模拟实时日志更新
+    function addLogEntry(type, message) {
+      const container = document.getElementById('log-container');
+      const now = new Date().toLocaleTimeString('zh-CN');
+      const logClass = {
+        'success': 'log-success',
+        'info': 'log-info',
+        'warning': 'log-warning',
+        'error': 'log-error'
+      }[type] || 'log-info';
+      
+      const logType = {
+        'success': '[SUCCESS]',
+        'info': '[INFO]',
+        'warning': '[WARN]',
+        'error': '[ERROR]'
+      }[type] || '[INFO]';
+
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      div.innerHTML = `
+        <span class="log-time">[${now}]</span>
+        <span class="${logClass}">${logType}</span>
+        ${message}
+      `;
+      
+      container.insertBefore(div, container.firstChild);
+      
+      // 保持最多 50 条日志
+      while (container.children.length > 50) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    // 快速操作函数
+    function restartGateway() {
+      if (confirm('确定要重启 Gateway 吗？')) {
+        addLogEntry('info', '正在重启 Gateway...');
+        setTimeout(() => {
+          addLogEntry('success', 'Gateway 重启成功!');
+        }, 2000);
+      }
+    }
+
+    function checkStatus() {
+      addLogEntry('info', '检查系统状态...');
+      setTimeout(() => {
+        addLogEntry('success', '系统状态正常 - 所有扩展运行中');
+      }, 1000);
+    }
+
+    function viewLogs() {
+      alert('日志功能开发中...');
+    }
+
+    function reloadConfig() {
+      if (confirm('确定要重载配置吗？')) {
+        addLogEntry('info', '正在重载配置...');
+        setTimeout(() => {
+          addLogEntry('success', '配置重载成功!');
+        }, 1500);
+      }
+    }
+
+    function clearCache() {
+      if (confirm('确定要清理缓存吗？')) {
+        addLogEntry('info', '正在清理缓存...');
+        setTimeout(() => {
+          addLogEntry('success', '缓存清理完成!');
+        }, 1000);
+      }
+    }
+
+    function openSettings() {
+      alert('设置页面开发中...');
+    }
+
+    function refreshLogs() {
+      addLogEntry('info', '日志已刷新');
+    }
+
+    // 页面加载完成
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('OpenClaw Gateway Dashboard 已加载');
+      
+      // 模拟一些实时数据更新
+      setInterval(() => {
+        const tokenUsage = document.getElementById('token-usage');
+        if (tokenUsage) {
+          const current = parseInt(tokenUsage.textContent.replace('K', ''));
+          const newValue = (current + Math.random() * 0.1).toFixed(1);
+          tokenUsage.textContent = newValue + 'K';
+        }
+      }, 5000);
+    });
+  </script>
+</body>
+</html>

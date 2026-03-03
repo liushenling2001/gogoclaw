@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenClaw 配置编辑器 v3</title>
+  <style>
+    :root { --primary: #667eea; --primary-light: rgba(102,126,234,0.1); --success: #10b981; --text: #111827; --text2: #6b7280; --border: #e5e7eb; --bg: #ffffff; --bg2: #f9fafb; --radius: 10px; }
+    @media (prefers-color-scheme: dark) { :root { --text: #f9fafb; --text2: #d1d5db; --bg: #1f2937; --bg2: #111827; --border: #4b5563; } }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: var(--bg2); color: var(--text); padding: 24px; line-height: 1.6; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 8px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .badge { display: inline-block; padding: 4px 12px; background: var(--primary-light); color: var(--primary); border-radius: 99px; font-size: 0.75rem; font-weight: 600; margin: 4px; }
+    .card { background: var(--bg); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-secondary { background: var(--bg2); color: var(--text); border: 2px solid var(--border); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid var(--border); padding-bottom: 12px; overflow-x: auto; }
+    .tab { padding: 8px 16px; border-radius: var(--radius); cursor: pointer; font-weight: 500; white-space: nowrap; }
+    .tab.active { background: var(--primary-light); color: var(--primary); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+    .form-input, .form-select { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: 0.95rem; }
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    .full { grid-column: 1 / -1; }
+    .help { font-size: 0.85rem; color: var(--text2); margin-top: 4px; }
+    .code { background: var(--bg2); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.8rem; }
+    .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
+    .template-card { background: var(--bg2); border: 2px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: all 0.2s; }
+    .template-card:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); }
+    .template-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .template-icon { font-size: 2rem; }
+    .template-title { font-weight: 700; }
+    .template-desc { font-size: 0.85rem; color: var(--text2); }
+    .template-features { font-size: 0.8rem; color: var(--text2); list-style: none; }
+    .template-features li { margin-bottom: 4px; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg); padding: 16px 24px; border-radius: var(--radius); box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-left: 4px solid var(--success); transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 1000; max-width: 400px; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-left-color: #ef4444; }
+    .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px; text-align: center; cursor: pointer; background: var(--bg2); }
+    .drop-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+    .quick-start { background: rgba(16,185,129,0.1); border: 1px solid var(--success); border-radius: var(--radius); padding: 16px; margin-bottom: 24px; }
+    .quick-start h3 { color: var(--success); margin-bottom: 8px; }
+    .quick-start ol { margin-left: 20px; color: var(--text2); }
+    .model-list { display: flex; flex-direction: column; gap: 12px; }
+    .model-item { background: var(--bg2); padding: 16px; border-radius: var(--radius); border: 2px solid var(--border); }
+    .model-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .model-actions { display: flex; gap: 8px; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg); border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-title { font-size: 1.5rem; font-weight: 700; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text2); }
+    #jsonPreview { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: var(--radius); overflow: auto; font-family: monospace; font-size: 0.85rem; max-height: 500px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card" style="text-align:center;padding:32px;">
+      <h1>🦎 OpenClaw 配置编辑器 v3</h1>
+      <p style="color:var(--text2);margin-bottom:12px;">可视化编辑 OpenClaw 配置，告别繁琐 JSON</p>
+      <div><span class="badge">✨ 便携版</span><span class="badge">🚀 预置模板</span><span class="badge">✅ 已修复</span></div>
+    </div>
+
+    <div class="quick-start">
+      <h3>🚀 快速开始</h3>
+      <ol>
+        <li>点击"📂 打开配置"或拖拽文件</li>
+        <li>在选项卡中修改配置</li>
+        <li>点击"💾 保存配置"下载</li>
+        <li>替换到 <code class="code">~/.openclaw/openclaw.json</code></li>
+        <li>运行 <code class="code">openclaw gateway restart</code></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📁 配置文件</div>
+      <input type="file" id="fileInput" accept=".json" style="display:none;" />
+      <div class="drop-zone" id="dropZone">
+        <div style="font-size:2rem;margin-bottom:8px;">📂</div>
+        <div style="font-weight:600;">点击或拖拽配置文件到此处</div>
+        <div class="help">支持：<code class="code">openclaw.json</code></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btnOpen">📂 打开配置</button>
+        <button class="btn btn-secondary" onclick="loadDefault()">🔄 默认配置</button>
+        <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
+        <button class="btn btn-secondary" onclick="downloadConfig()">⬇️ 下载备份</button>
+        <button class="btn btn-secondary" onclick="copyJson()">📋 复制 JSON</button>
+      </div>
+      <div class="help" style="margin-top:12px;">💡 位置：<code class="code">~/.openclaw/openclaw.json</code></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('models')">🤖 模型</div>
+      <div class="tab" onclick="switchTab('agents')">👤 代理</div>
+      <div class="tab" onclick="switchTab('gateway')">🌐 Gateway</div>
+      <div class="tab" onclick="switchTab('channels')">📱 通道</div>
+      <div class="tab" onclick="switchTab('tools')">🔧 工具</div>
+      <div class="tab" onclick="switchTab('preview')">📄 预览</div>
+    </div>
+
+    <div id="tab-models" class="tab-content active">
+      <div class="card">
+        <div class="card-title">🤖 模型提供商 <button class="btn btn-primary btn-sm" onclick="showModal()" style="margin-left:auto;">➕ 添加</button></div>
+        <div id="modelList" class="model-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 常用模板（一键添加）</div>
+        <div class="help" style="margin-bottom:16px;">点击模板快速添加，只需填 API Key</div>
+        <div class="templates" id="templates"></div>
+      </div>
+    </div>
+
+    <div id="tab-agents" class="tab-content">
+      <div class="card">
+        <div class="card-title">👤 代理设置</div>
+        <div class="grid">
+          <div class="form-group full"><label class="form-label">工作目录</label><input type="text" class="form-input" id="agentWorkspace"></div>
+          <div class="form-group full"><label class="form-label">主模型</label><input type="text" class="form-input" id="agentModel" placeholder="provider/model"></div>
+          <div class="form-group"><label class="form-label">并发数</label><input type="number" class="form-input" id="agentMax" value="4"></div>
+          <div class="form-group"><label class="form-label">子代理并发</label><input type="number" class="form-input" id="agentSubMax" value="8"></div>
+          <div class="form-group"><label class="form-label">压缩模式</label><select class="form-select" id="agentCompact"><option value="safeguard">safeguard</option><option value="aggressive">aggressive</option><option value="disabled">disabled</option></select></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-gateway" class="tab-content">
+      <div class="card">
+        <div class="card-title">🌐 Gateway</div>
+        <div class="grid">
+          <div class="form-group"><label class="form-label">端口</label><input type="number" class="form-input" id="gwPort" value="18789"></div>
+          <div class="form-group"><label class="form-label">绑定</label><select class="form-select" id="gwBind"><option value="loopback">仅本地</option><option value="all">所有接口</option></select></div>
+          <div class="form-group"><label class="form-label">认证</label><select class="form-select" id="gwAuth"><option value="token">Token</option><option value="none">无</option></select></div>
+          <div class="form-group full"><label class="form-label">Token</label><input type="text" class="form-input" id="gwToken"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-channels" class="tab-content">
+      <div class="card">
+        <div class="card-title">📱 飞书</div>
+        <div class="grid">
+          <div class="form-group"><label class="form-label">启用</label><select class="form-select" id="fsEnabled"><option value="true">是</option><option value="false">否</option></select></div>
+          <div class="form-group full"><label class="form-label">App ID</label><input type="text" class="form-input" id="fsAppId"></div>
+          <div class="form-group full"><label class="form-label">App Secret</label><input type="password" class="form-input" id="fsSecret"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-tools" class="tab-content">
+      <div class="card">
+        <div class="card-title">🔧 工具</div>
+        <div class="grid">
+          <div class="form-group"><label class="form-label">配置</label><select class="form-select" id="toolProfile"><option value="full">完整</option><option value="minimal">最小</option></select></div>
+          <div class="form-group"><label class="form-label">搜索</label><select class="form-select" id="toolSearch"><option value="true">启用</option><option value="false">禁用</option></select></div>
+          <div class="form-group"><label class="form-label">抓取</label><select class="form-select" id="toolFetch"><option value="true">启用</option><option value="false">禁用</option></select></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-preview" class="tab-content">
+      <div class="card">
+        <div class="card-title">📄 JSON 预览</div>
+        <pre id="jsonPreview"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">添加提供商</div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="form-group"><label class="form-label">模板</label><select class="form-select" id="mTemplate" onchange="onTemplateChange()"><option value="">-- 自定义 --</option><option value="bailian">阿里云百炼</option><option value="zhipu">智谱 AI</option><option value="minimax">MiniMax</option><option value="moonshot">月之暗面</option><option value="deepseek">深度求索</option><option value="baichuan">百川</option><option value="stepfun">阶跃星辰</option></select></div>
+      <div class="form-group"><label class="form-label">ID</label><input type="text" class="form-input" id="mId"></div>
+      <div class="form-group"><label class="form-label">Base URL</label><input type="text" class="form-input" id="mUrl"></div>
+      <div class="form-group"><label class="form-label">API Key</label><input type="text" class="form-input" id="mKey"></div>
+      <div style="display:flex;gap:12px;margin-top:20px;"><button class="btn btn-primary" onclick="confirmAdd()">确认</button><button class="btn btn-secondary" onclick="closeModal()">取消</button></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+var configData = {};
+var TEMPLATES = {
+  bailian: { name: '阿里云百炼', icon: '☁️', id: 'bailian', url: 'https://dashscope.aliyuncs.com/compatible-mode/v1', desc: '通义千问系列', models: [{ id: 'qwen3.5-plus', name: 'Qwen3.5 Plus', cw: 128000, mt: 4096 }] },
+  zhipu: { name: '智谱 AI', icon: '🧠', id: 'zhipu', url: 'https://open.bigmodel.cn/api/paas/v4', desc: 'ChatGLM 系列', models: [{ id: 'glm-4-plus', name: 'GLM-4 Plus', cw: 128000, mt: 4096 }] },
+  minimax: { name: 'MiniMax', icon: '🤖', id: 'minimax', url: 'https://api.minimax.chat/v1', desc: 'ABAB 系列', models: [{ id: 'abab6.5s-chat', name: 'ABAB 6.5s', cw: 256000, mt: 4096 }] },
+  moonshot: { name: '月之暗面', icon: '🌙', id: 'moonshot', url: 'https://api.moonshot.cn/v1', desc: 'Kimi', models: [{ id: 'moonshot-v1-8k', name: 'Moonshot 8K', cw: 8000, mt: 2048 }] },
+  deepseek: { name: '深度求索', icon: '🔬', id: 'deepseek', url: 'https://api.deepseek.com/v1', desc: 'DeepSeek', models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat', cw: 128000, mt: 4096 }] },
+  baichuan: { name: '百川', icon: '🌊', id: 'baichuan', url: 'https://api.baichuan-ai.com/v1', desc: 'Baichuan', models: [{ id: 'Baichuan4', name: 'Baichuan 4', cw: 128000, mt: 4096 }] },
+  stepfun: { name: '阶跃星辰', icon: '⭐', id: 'stepfun', url: 'https://api.stepfun.com/v1', desc: 'Step 系列', models: [{ id: 'step-1-8k', name: 'Step-1 8K', cw: 8000, mt: 2048 }] }
+};
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelector('.tab[onclick="switchTab(\\'' + id + '\\')"]').classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'preview') updatePreview();
+}
+
+function renderTemplates() {
+  var container = document.getElementById('templates');
+  container.innerHTML = '';
+  Object.keys(TEMPLATES).forEach(function(key) {
+    var t = TEMPLATES[key];
+    var card = document.createElement('div');
+    card.className = 'template-card';
+    card.onclick = function() { useTemplate(key); };
+    card.innerHTML = '<div class="template-header"><div class="template-icon">' + t.icon + '</div><div><div class="template-title">' + t.name + '</div><div class="template-desc">' + t.desc + '</div></div></div><ul class="template-features">' + t.models.map(function(m) { return '<li>• ' + m.name; }).join('') + '</ul>';
+    container.appendChild(card);
+  });
+}
+
+function useTemplate(key) {
+  var t = TEMPLATES[key];
+  if (!t) return;
+  if (configData.models && configData.models.providers && configData.models.providers[t.id]) { toast(t.name + ' 已存在', true); return; }
+  if (!configData.models) configData.models = {};
+  if (!configData.models.providers) configData.models.providers = {};
+  var models = t.models.map(function(m) { return { id: m.id, name: m.name, reasoning: false, input: ['text'], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: m.cw, maxTokens: m.mt }; });
+  configData.models.providers[t.id] = { baseUrl: t.url, apiKey: '', api: 'openai-completions', models: models };
+  renderModels();
+  toast('已添加 ' + t.name + '，请填 API Key');
+}
+
+function loadFile(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try { configData = JSON.parse(ev.target.result); loadToForm(); toast('加载成功'); }
+    catch (err) { toast('格式错误：' + err.message, true); }
+  };
+  reader.readAsText(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  var file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.json')) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try { configData = JSON.parse(ev.target.result); loadToForm(); toast('加载成功'); }
+      catch (err) { toast('格式错误：' + err.message, true); }
+    };
+    reader.readAsText(file);
+  }
+}
+
+function loadDefault() {
+  configData = { meta: { lastTouchedVersion: '2026.2.1', lastTouchedAt: new Date().toISOString() }, models: { providers: { bailian: { baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: '', api: 'openai-completions', models: [{ id: 'qwen3.5-plus', name: 'Qwen3.5 Plus', reasoning: false, input: ['text'], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 }] } } }, agents: { defaults: { workspace: './workspace', compaction: { mode: 'safeguard' }, maxConcurrent: 4, subagents: { maxConcurrent: 8 }, model: { primary: 'bailian/qwen3.5-plus' } } }, tools: { profile: 'full', web: { search: { enabled: false }, fetch: { enabled: true } } }, gateway: { port: 18789, mode: 'local', bind: 'loopback', auth: { mode: 'token', token: '' } }, channels: { feishu: { enabled: true, appId: '', appSecret: '' } } };
+  loadToForm();
+  toast('已加载默认配置');
+}
+
+function loadToForm() {
+  renderModels();
+  if (configData.agents && configData.agents.defaults) {
+    document.getElementById('agentWorkspace').value = configData.agents.defaults.workspace || '';
+    document.getElementById('agentModel').value = (configData.agents.defaults.model && configData.agents.defaults.model.primary) || '';
+    document.getElementById('agentMax').value = configData.agents.defaults.maxConcurrent || 4;
+    document.getElementById('agentSubMax').value = (configData.agents.defaults.subagents && configData.agents.defaults.subagents.maxConcurrent) || 8;
+    document.getElementById('agentCompact').value = (configData.agents.defaults.compaction && configData.agents.defaults.compaction.mode) || 'safeguard';
+  }
+  if (configData.gateway) {
+    document.getElementById('gwPort').value = configData.gateway.port || 18789;
+    document.getElementById('gwBind').value = configData.gateway.bind || 'loopback';
+    document.getElementById('gwAuth').value = (configData.gateway.auth && configData.gateway.auth.mode) || 'token';
+    document.getElementById('gwToken').value = (configData.gateway.auth && configData.gateway.auth.token) || '';
+  }
+  if (configData.channels && configData.channels.feishu) {
+    document.getElementById('fsEnabled').value = configData.channels.feishu.enabled ? 'true' : 'false';
+    document.getElementById('fsAppId').value = configData.channels.feishu.appId || '';
+    document.getElementById('fsSecret').value = configData.channels.feishu.appSecret || '';
+  }
+  if (configData.tools) {
+    document.getElementById('toolProfile').value = configData.tools.profile || 'full';
+    document.getElementById('toolSearch').value = (configData.tools.web && configData.tools.web.search && configData.tools.web.search.enabled) ? 'true' : 'false';
+    document.getElementById('toolFetch').value = (configData.tools.web && configData.tools.web.fetch && configData.tools.web.fetch.enabled) ? 'true' : 'false';
+  }
+  updatePreview();
+  toast('配置已加载');
+}
+
+function renderModels() {
+  var container = document.getElementById('modelList');
+  container.innerHTML = '';
+  if (!configData.models || !configData.models.providers) { container.innerHTML = '<div class="help">暂无模型提供商</div>'; return; }
+  Object.keys(configData.models.providers).forEach(function(id) {
+    var p = configData.models.providers[id];
+    var t = TEMPLATES[id];
+    var icon = t ? t.icon : '🔌';
+    var name = t ? t.name : id;
+    var div = document.createElement('div');
+    div.className = 'model-item';
+    div.innerHTML = '<div class="model-header"><div class="model-title">' + icon + ' ' + name + ' (' + id + ')</div><div class="model-actions"><button class="btn btn-secondary btn-sm" onclick="editProvider(\\'' + id + '\\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteProvider(\\'' + id + '\\')">🗑️</button></div></div><div class="grid"><div class="form-group full"><label class="form-label">Base URL</label><input type="text" class="form-input" value="' + (p.baseUrl || '') + '" onchange="updateProvider(\\'' + id + '\\',\\'baseUrl\\',this.value)"></div><div class="form-group full"><label class="form-label">API Key</label><input type="password" class="form-input" value="' + (p.apiKey || '') + '" onchange="updateProvider(\\'' + id + '\\',\\'apiKey\\',this.value)"></div></div>';
+    container.appendChild(div);
+  });
+}
+
+function updateProvider(id, field, value) { if (configData.models && configData.models.providers && configData.models.providers[id]) configData.models.providers[id][field] = value; }
+function editProvider(id) { var p = configData.models.providers[id]; alert(id + '\\n\\nBase URL: ' + p.baseUrl + '\\nAPI Key: ' + (p.apiKey ? '已配置' : '未配置')); }
+function deleteProvider(id) { if (confirm('确定删除 ' + id + '？')) { delete configData.models.providers[id]; renderModels(); toast('已删除'); } }
+
+function showModal() { document.getElementById('modal').classList.add('show'); }
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+function onTemplateChange() { var key = document.getElementById('mTemplate').value; if (key && TEMPLATES[key]) { document.getElementById('mId').value = TEMPLATES[key].id; document.getElementById('mUrl').value = TEMPLATES[key].url; } }
+function confirmAdd() {
+  var id = document.getElementById('mId').value.trim();
+  var url = document.getElementById('mUrl').value.trim();
+  var key = document.getElementById('mKey').value.trim();
+  if (!id) { toast('请填写 ID', true); return; }
+  if (!url) { toast('请填写 Base URL', true); return; }
+  if (configData.models && configData.models.providers && configData.models.providers[id]) { toast(id + ' 已存在', true); return; }
+  if (!configData.models) configData.models = {};
+  if (!configData.models.providers) configData.models.providers = {};
+  configData.models.providers[id] = { baseUrl: url, apiKey: key, api: 'openai-completions', models: [] };
+  renderModels();
+  closeModal();
+  toast('已添加 ' + id);
+}
+
+function updatePreview() { saveForm(); if (!configData.meta) configData.meta = {}; configData.meta.lastTouchedAt = new Date().toISOString(); document.getElementById('jsonPreview').textContent = JSON.stringify(configData, null, 2); }
+
+function saveForm() {
+  if (!configData.agents) configData.agents = {};
+  if (!configData.agents.defaults) configData.agents.defaults = {};
+  configData.agents.defaults.workspace = document.getElementById('agentWorkspace').value;
+  configData.agents.defaults.model = { primary: document.getElementById('agentModel').value };
+  configData.agents.defaults.maxConcurrent = parseInt(document.getElementById('agentMax').value) || 4;
+  configData.agents.defaults.subagents = { maxConcurrent: parseInt(document.getElementById('agentSubMax').value) || 8 };
+  configData.agents.defaults.compaction = { mode: document.getElementById('agentCompact').value };
+  if (!configData.gateway) configData.gateway = {};
+  configData.gateway.port = parseInt(document.getElementById('gwPort').value) || 18789;
+  configData.gateway.bind = document.getElementById('gwBind').value;
+  configData.gateway.auth = { mode: document.getElementById('gwAuth').value, token: document.getElementById('gwToken').value };
+  if (!configData.channels) configData.channels = {};
+  if (!configData.channels.feishu) configData.channels.feishu = {};
+  configData.channels.feishu.enabled = document.getElementById('fsEnabled').value === 'true';
+  configData.channels.feishu.appId = document.getElementById('fsAppId').value;
+  configData.channels.feishu.appSecret = document.getElementById('fsSecret').value;
+  if (!configData.tools) configData.tools = {};
+  configData.tools.profile = document.getElementById('toolProfile').value;
+  if (!configData.tools.web) configData.tools.web = {};
+  configData.tools.web.search = { enabled: document.getElementById('toolSearch').value === 'true' };
+  configData.tools.web.fetch = { enabled: document.getElementById('toolFetch').value === 'true' };
+}
+
+function saveConfig() { saveForm(); if (!configData.meta) configData.meta = {}; configData.meta.lastTouchedAt = new Date().toISOString(); var json = JSON.stringify(configData, null, 2); var blob = new Blob([json], { type: 'application/json' }); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'openclaw.json'; a.click(); URL.revokeObjectURL(url); toast('配置已保存'); }
+function downloadConfig() { saveForm(); var json = JSON.stringify(configData, null, 2); var blob = new Blob([json], { type: 'application/json' }); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'openclaw-backup-' + new Date().toISOString().split('T')[0] + '.json'; a.click(); URL.revokeObjectURL(url); toast('配置已下载'); }
+function copyJson() { saveForm(); var json = JSON.stringify(configData, null, 2); navigator.clipboard.writeText(json).then(function() { toast('已复制'); }).catch(function() { toast('复制失败', true); }); }
+function toast(msg, isError) { var t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show' + (isError ? ' error' : ''); setTimeout(function() { t.classList.remove('show'); }, 3000); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderTemplates();
+  loadDefault();
+  document.getElementById('btnOpen').onclick = function() { document.getElementById('fileInput').click(); };
+  document.getElementById('fileInput').onchange = loadFile;
+  var dropZone = document.getElementById('dropZone');
+  dropZone.onclick = function() { document.getElementById('fileInput').click(); };
+  dropZone.ondrop = handleDrop;
+  dropZone.ondragover = function(e) { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; dropZone.style.background = 'var(--primary-light)'; };
+  dropZone.ondragleave = function(e) { e.preventDefault(); dropZone.style.borderColor = ''; dropZone.style.background = ''; };
+});
+  </script>
+</body>
+</html>

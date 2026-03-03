@@ -1,0 +1,1374 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenClaw Gateway - 智能控制台</title>
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦎</text></svg>" />
+  <style>
+    /* ==================== 主题变量 ==================== */
+    :root {
+      /* 主色调 - 渐变紫蓝 */
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --primary-color: #667eea;
+      --primary-dark: #5a67d8;
+      --primary-light: rgba(102, 126, 234, 0.1);
+      
+      /* 功能色 */
+      --success-color: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --warning-color: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --danger-color: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.1);
+      --info-color: #3b82f6;
+      --info-bg: rgba(59, 130, 246, 0.1);
+      
+      /* 中性色 */
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --border-color: #e5e7eb;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      
+      /* 阴影 */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      
+      /* 圆角 */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-full: 9999px;
+      
+      /* 动画 */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+        --text-tertiary: #9ca3af;
+        --bg-primary: #111827;
+        --bg-secondary: #1f2937;
+        --bg-tertiary: #374151;
+        --border-color: #4b5563;
+      }
+    }
+
+    /* ==================== 全局样式 ==================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 背景装饰 */
+    .bg-decoration {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 400px;
+      background: var(--primary-gradient);
+      clip-path: ellipse(70% 100% at 50% 0%);
+      z-index: -1;
+      opacity: 0.9;
+    }
+
+    /* ==================== 侧边导航 ==================== */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 280px;
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border-color);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform var(--transition-normal);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px 24px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 24px;
+    }
+
+    .sidebar-brand-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .sidebar-brand-text {
+      flex: 1;
+    }
+
+    .sidebar-brand-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+    }
+
+    .sidebar-brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--primary-light);
+      color: var(--primary-color);
+    }
+
+    .nav-item-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .sidebar-footer {
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--success-bg);
+      border-radius: var(--radius-md);
+      color: var(--success-color);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success-color);
+      border-radius: var(--radius-full);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+
+    /* ==================== 主内容区 ==================== */
+    .main-content {
+      margin-left: 280px;
+      padding: 32px 40px;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      margin-bottom: 40px;
+    }
+
+    .page-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    /* ==================== 统计卡片 ==================== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: var(--bg-primary);
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+      transition: all var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--transition-normal);
+    }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-xl);
+      transform: translateY(-4px);
+    }
+
+    .stat-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .stat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .stat-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      flex-shrink: 0;
+    }
+
+    .stat-card-icon.primary {
+      background: var(--primary-light);
+    }
+
+    .stat-card-icon.success {
+      background: var(--success-bg);
+    }
+
+    .stat-card-icon.warning {
+      background: var(--warning-bg);
+    }
+
+    .stat-card-icon.info {
+      background: var(--info-bg);
+    }
+
+    .stat-card-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-card-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .stat-card-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.85rem;
+    }
+
+    .trend-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .trend-badge.up {
+      background: var(--success-bg);
+      color: var(--success-color);
+    }
+
+    .trend-badge.down {
+      background: var(--danger-bg);
+      color: var(--danger-color);
+    }
+
+    /* ==================== 内容网格 ==================== */
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 1200px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ==================== 卡片组件 ==================== */
+    .card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      transition: all var(--transition-normal);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title-icon {
+      font-size: 1.2rem;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .card-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    /* ==================== 按钮 ==================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-color);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+    }
+
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: var(--radius-full);
+    }
+
+    /* ==================== 活动流 ==================== */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+    }
+
+    .activity-item:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-color);
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.success {
+      background: var(--success-bg);
+    }
+
+    .activity-icon.primary {
+      background: var(--primary-light);
+    }
+
+    .activity-icon.warning {
+      background: var(--warning-bg);
+    }
+
+    .activity-icon.info {
+      background: var(--info-bg);
+    }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-message {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .activity-message strong {
+      font-weight: 600;
+    }
+
+    .activity-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* ==================== 快速操作网格 ==================== */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .quick-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-align: center;
+    }
+
+    .quick-action-btn:hover {
+      border-color: var(--primary-color);
+      background: var(--primary-light);
+      transform: translateY(-2px);
+    }
+
+    .quick-action-icon {
+      font-size: 2rem;
+    }
+
+    .quick-action-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ==================== 扩展列表 ==================== */
+    .extension-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .extension-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+
+    .extension-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .extension-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-primary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .extension-info {
+      flex: 1;
+    }
+
+    .extension-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .extension-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .extension-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .extension-status.running {
+      background: var(--success-bg);
+      color: var(--success-color);
+    }
+
+    .extension-status.warning {
+      background: var(--warning-bg);
+      color: var(--warning-color);
+    }
+
+    .extension-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ==================== 日志终端 ==================== */
+    .log-terminal {
+      background: #1e1e1e;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #2d2d2d;
+      border-bottom: 1px solid #3d3d3d;
+    }
+
+    .log-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: var(--radius-full);
+    }
+
+    .log-dot.red { background: #ff5f56; }
+    .log-dot.yellow { background: #ffbd2e; }
+    .log-dot.green { background: #27ca40; }
+
+    .log-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-body {
+      padding: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid #2d2d2d;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-timestamp {
+      color: #6b7280;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .log-level {
+      font-weight: 600;
+      min-width: 70px;
+    }
+
+    .log-level.info { color: #3b82f6; }
+    .log-level.success { color: #10b981; }
+    .log-level.warning { color: #f59e0b; }
+    .log-level.error { color: #ef4444; }
+
+    .log-message {
+      color: #e5e7eb;
+      word-break: break-word;
+    }
+
+    /* ==================== 进度环 ==================== */
+    .progress-ring {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+
+    .progress-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+    }
+
+    .progress-ring-bg {
+      stroke: var(--bg-tertiary);
+    }
+
+    .progress-ring-fill {
+      stroke: url(#gradient);
+      transition: stroke-dashoffset var(--transition-slow);
+    }
+
+    .progress-ring-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .progress-ring-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .progress-ring-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* ==================== 响应式 ==================== */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 24px 20px;
+      }
+
+      .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page-title {
+        font-size: 1.75rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-actions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ==================== 动画 ==================== */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-slide-in {
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    /* 延迟动画 */
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+  </style>
+</head>
+<body>
+  <!-- 背景装饰 -->
+  <div class="bg-decoration"></div>
+
+  <!-- 侧边导航 -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🦎</div>
+      <div class="sidebar-brand-text">
+        <div class="sidebar-brand-title">OpenClaw</div>
+        <div class="sidebar-brand-subtitle">Gateway Console</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active">
+        <span class="nav-item-icon">📊</span>
+        <span>仪表盘</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="nav-item-icon">💬</span>
+        <span>会话</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="nav-item-icon">🔌</span>
+        <span>扩展</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="nav-item-icon">⚙️</span>
+        <span>配置</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="nav-item-icon">📜</span>
+        <span>日志</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="nav-item-icon">📅</span>
+        <span>定时任务</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span>Gateway 运行中</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 页面头部 -->
+    <div class="page-header animate-slide-in">
+      <h1 class="page-title">欢迎回来</h1>
+      <p class="page-subtitle">这里是你的 OpenClaw Gateway 智能控制台</p>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <!-- Gateway 状态 -->
+      <div class="stat-card animate-slide-in delay-1">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-card-value">99.9%</div>
+            <div class="stat-card-label">正常运行时间</div>
+          </div>
+          <div class="stat-card-icon success">✅</div>
+        </div>
+        <div class="stat-card-footer">
+          <span class="trend-badge up">↑ 0.2%</span>
+          <span style="color: var(--text-secondary);">过去 30 天</span>
+        </div>
+      </div>
+
+      <!-- 活跃会话 -->
+      <div class="stat-card animate-slide-in delay-2">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-card-value">3</div>
+            <div class="stat-card-label">活跃会话</div>
+          </div>
+          <div class="stat-card-icon primary">💬</div>
+        </div>
+        <div class="stat-card-footer">
+          <span class="trend-badge up">↑ 2</span>
+          <span style="color: var(--text-secondary);">较上小时</span>
+        </div>
+      </div>
+
+      <!-- Token 使用 -->
+      <div class="stat-card animate-slide-in delay-3">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-card-value">12.5K</div>
+            <div class="stat-card-label">今日 Token</div>
+          </div>
+          <div class="stat-card-icon warning">📊</div>
+        </div>
+        <div class="stat-card-footer">
+          <span class="trend-badge down">↓ 8%</span>
+          <span style="color: var(--text-secondary);">较昨日</span>
+        </div>
+      </div>
+
+      <!-- 扩展 -->
+      <div class="stat-card animate-slide-in delay-4">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-card-value">5</div>
+            <div class="stat-card-label">已加载扩展</div>
+          </div>
+          <div class="stat-card-icon info">🔌</div>
+        </div>
+        <div class="stat-card-footer">
+          <span class="trend-badge up">全部正常</span>
+          <span style="color: var(--text-secondary);">Feishu, DingTalk...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容网格 -->
+    <div class="content-grid">
+      <!-- 最近活动 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">🕐</span>
+            <span>最近活动</span>
+          </div>
+          <button class="btn btn-outline btn-sm">查看全部</button>
+        </div>
+        <div class="card-body">
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon success">✓</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>Feishu 消息</strong> 成功发送给 ou_736c3390c340633be7998a82a91b2ec4
+                </div>
+                <div class="activity-meta">
+                  <span>2 分钟前</span>
+                </div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon primary">📝</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>扩展加载</strong> DingTalk Connector v1.0.0
+                </div>
+                <div class="activity-meta">
+                  <span>10 分钟前</span>
+                </div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon warning">⚠️</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>API 警告</strong> DingTalk 文件下载 404
+                </div>
+                <div class="activity-meta">
+                  <span>1 小时前</span>
+                </div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon info">🔄</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>Gateway 重启</strong> 配置更新完成
+                </div>
+                <div class="activity-meta">
+                  <span>2 小时前</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快速操作 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">⚡</span>
+            <span>快速操作</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="quick-actions-grid">
+            <div class="quick-action-btn" onclick="restartGateway()">
+              <span class="quick-action-icon">🔄</span>
+              <span class="quick-action-label">重启 Gateway</span>
+            </div>
+            <div class="quick-action-btn" onclick="checkStatus()">
+              <span class="quick-action-icon">📊</span>
+              <span class="quick-action-label">检查状态</span>
+            </div>
+            <div class="quick-action-btn" onclick="viewLogs()">
+              <span class="quick-action-icon">📋</span>
+              <span class="quick-action-label">查看日志</span>
+            </div>
+            <div class="quick-action-btn" onclick="reloadConfig()">
+              <span class="quick-action-icon">⚙️</span>
+              <span class="quick-action-label">重载配置</span>
+            </div>
+            <div class="quick-action-btn" onclick="clearCache()">
+              <span class="quick-action-icon">🗑️</span>
+              <span class="quick-action-label">清理缓存</span>
+            </div>
+            <div class="quick-action-btn" onclick="openSettings()">
+              <span class="quick-action-icon">🔧</span>
+              <span class="quick-action-label">系统设置</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 扩展列表 -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">🔌</span>
+            <span>已加载扩展</span>
+          </div>
+          <button class="btn btn-outline btn-sm">管理扩展</button>
+        </div>
+        <div class="card-body">
+          <div class="extension-list">
+            <div class="extension-item">
+              <div class="extension-icon">📱</div>
+              <div class="extension-info">
+                <div class="extension-name">Feishu</div>
+                <div class="extension-meta">
+                  <span>v0.1.6</span>
+                  <span class="extension-status running">● 运行中</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </div>
+            <div class="extension-item">
+              <div class="extension-icon">💼</div>
+              <div class="extension-info">
+                <div class="extension-name">DingTalk Connector</div>
+                <div class="extension-meta">
+                  <span>v1.0.0</span>
+                  <span class="extension-status running">● 运行中</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </div>
+            <div class="extension-item">
+              <div class="extension-icon">🐧</div>
+              <div class="extension-info">
+                <div class="extension-name">QQBot</div>
+                <div class="extension-meta">
+                  <span>v2.0.0</span>
+                  <span class="extension-status running">● 运行中</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </div>
+            <div class="extension-item">
+              <div class="extension-icon">🫧</div>
+              <div class="extension-info">
+                <div class="extension-name">BlueBubbles</div>
+                <div class="extension-meta">
+                  <span>v0.9.0</span>
+                  <span class="extension-status warning">⚠️ 警告</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </div>
+            <div class="extension-item">
+              <div class="extension-icon">🎨</div>
+              <div class="extension-info">
+                <div class="extension-name">Canvas</div>
+                <div class="extension-meta">
+                  <span>v1.0.0</span>
+                  <span class="extension-status running">● 运行中</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm">配置</button>
+                <button class="btn btn-outline btn-sm">日志</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 系统日志 -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">📜</span>
+            <span>实时日志</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-outline btn-sm" onclick="refreshLogs()">刷新</button>
+            <button class="btn btn-outline btn-sm" onclick="clearLogs()">清空</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="log-terminal">
+            <div class="log-header">
+              <div class="log-dots">
+                <div class="log-dot red"></div>
+                <div class="log-dot yellow"></div>
+                <div class="log-dot green"></div>
+              </div>
+              <div class="log-actions">
+                <button class="btn btn-outline btn-sm" style="border: none; color: #9ca3af;">自动滚动</button>
+              </div>
+            </div>
+            <div class="log-body" id="log-container">
+              <div class="log-entry">
+                <span class="log-timestamp">20:24:37</span>
+                <span class="log-level success">[SUCCESS]</span>
+                <span class="log-message">Gateway 重启成功 - PID: 251492</span>
+              </div>
+              <div class="log-entry">
+                <span class="log-timestamp">20:24:36</span>
+                <span class="log-level info">[INFO]</span>
+                <span class="log-message">Feishu WebSocket 连接已建立</span>
+              </div>
+              <div class="log-entry">
+                <span class="log-timestamp">20:24:35</span>
+                <span class="log-level info">[INFO]</span>
+                <span class="log-message">加载扩展：DingTalk Connector v1.0.0</span>
+              </div>
+              <div class="log-entry">
+                <span class="log-timestamp">20:24:34</span>
+                <span class="log-level warning">[WARN]</span>
+                <span class="log-message">DingTalk API 404: /v1.0/im/chatFiles/downloadUrls</span>
+              </div>
+              <div class="log-entry">
+                <span class="log-timestamp">20:24:33</span>
+                <span class="log-level info">[INFO]</span>
+                <span class="log-message">Gateway 服务启动 - 端口：18789</span>
+              </div>
+              <div class="log-entry">
+                <span class="log-timestamp">20:24:32</span>
+                <span class="log-level info">[INFO]</span>
+                <span class="log-message">读取配置文件：~/.openclaw/openclaw.json</span>
+              </div>
+              <div class="log-entry">
+                <span class="log-timestamp">20:24:31</span>
+                <span class="log-level info">[INFO]</span>
+                <span class="log-message">初始化插件系统...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // 日志级别颜色映射
+    const logLevels = {
+      'success': { class: 'log-level success', text: '[SUCCESS]' },
+      'info': { class: 'log-level info', text: '[INFO]' },
+      'warning': { class: 'log-level warning', text: '[WARN]' },
+      'error': { class: 'log-level error', text: '[ERROR]' }
+    };
+
+    // 添加日志条目
+    function addLogEntry(type, message) {
+      const container = document.getElementById('log-container');
+      const now = new Date().toLocaleTimeString('en-GB');
+      const level = logLevels[type] || logLevels['info'];
+      
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.innerHTML = `
+        <span class="log-timestamp">${now}</span>
+        <span class="${level.class}">${level.text}</span>
+        <span class="log-message">${message}</span>
+      `;
+      
+      container.insertBefore(div, container.firstChild);
+      
+      // 保持最多 100 条日志
+      while (container.children.length > 100) {
+        container.removeChild(container.lastChild);
+      }
+      
+      // 自动滚动到底部
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // 快速操作函数
+    function restartGateway() {
+      if (confirm('确定要重启 Gateway 吗？\n\n这将会暂时中断所有服务。')) {
+        addLogEntry('info', '正在重启 Gateway...');
+        setTimeout(() => {
+          addLogEntry('success', 'Gateway 重启成功！新 PID: ' + Math.floor(Math.random() * 100000 + 200000));
+        }, 2000);
+      }
+    }
+
+    function checkStatus() {
+      addLogEntry('info', '正在检查系统状态...');
+      setTimeout(() => {
+        addLogEntry('success', '系统状态正常 - 所有扩展运行中');
+        addLogEntry('info', 'Gateway 响应时间：23ms');
+        addLogEntry('info', '内存使用：156MB / 512MB');
+      }, 800);
+    }
+
+    function viewLogs() {
+      addLogEntry('info', '打开完整日志查看器...');
+    }
+
+    function reloadConfig() {
+      if (confirm('确定要重载配置吗？\n\n这将应用最新的配置文件更改。')) {
+        addLogEntry('info', '正在重载配置...');
+        setTimeout(() => {
+          addLogEntry('success', '配置重载成功！');
+        }, 1500);
+      }
+    }
+
+    function clearCache() {
+      if (confirm('确定要清理缓存吗？')) {
+        addLogEntry('info', '正在清理缓存...');
+        setTimeout(() => {
+          addLogEntry('success', '缓存清理完成！释放 45MB 空间');
+        }, 1000);
+      }
+    }
+
+    function openSettings() {
+      addLogEntry('info', '打开系统设置页面...');
+    }
+
+    function refreshLogs() {
+      addLogEntry('info', '日志已刷新');
+    }
+
+    function clearLogs() {
+      if (confirm('确定要清空所有日志吗？')) {
+        const container = document.getElementById('log-container');
+        container.innerHTML = '';
+        addLogEntry('info', '日志已清空');
+      }
+    }
+
+    // 导航项点击处理
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // 模拟实时数据更新
+    setInterval(() => {
+      // 随机更新某个统计值
+      const statCards = document.querySelectorAll('.stat-card-value');
+      if (Math.random() > 0.7) {
+        const tokenCard = statCards[2];
+        if (tokenCard) {
+          const current = parseFloat(tokenCard.textContent.replace('K', ''));
+          const newValue = (current + (Math.random() - 0.3) * 0.5).toFixed(1);
+          tokenCard.textContent = Math.max(0, newValue) + 'K';
+        }
+      }
+    }, 3000);
+
+    // 模拟随机日志
+    const sampleLogs = [
+      { type: 'info', msg: '处理 incoming message from Feishu' },
+      { type: 'success', msg: '消息发送成功 - message_id: om_' + Math.random().toString(36).substr(2, 9) },
+      { type: 'info', msg: 'Session heartbeat check - all sessions healthy' },
+      { type: 'warning', msg: 'API rate limit approaching (85% used)' },
+      { type: 'info', msg: 'Cron job executed: daily-backup' }
+    ];
+
+    setInterval(() => {
+      if (Math.random() > 0.6) {
+        const log = sampleLogs[Math.floor(Math.random() * sampleLogs.length)];
+        addLogEntry(log.type, log.msg);
+      }
+    }, 5000);
+
+    // 页面加载完成
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🦎 OpenClaw Gateway Dashboard v2.0 已加载');
+      addLogEntry('success', 'Dashboard v2.0 初始化完成');
+    });
+  </script>
+</body>
+</html>

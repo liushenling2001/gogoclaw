@@ -1,0 +1,1983 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenClaw Gateway - 智能控制台</title>
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦎</text></svg>" />
+  <style>
+    /* ==================== 主题变量 ==================== */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --primary-color: #667eea;
+      --primary-dark: #5a67d8;
+      --primary-light: rgba(102, 126, 234, 0.1);
+      --success-color: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --warning-color: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --danger-color: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.1);
+      --info-color: #3b82f6;
+      --info-bg: rgba(59, 130, 246, 0.1);
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --border-color: #e5e7eb;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-full: 9999px;
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+        --text-tertiary: #9ca3af;
+        --bg-primary: #111827;
+        --bg-secondary: #1f2937;
+        --bg-tertiary: #374151;
+        --border-color: #4b5563;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .bg-decoration {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 400px;
+      background: var(--primary-gradient);
+      clip-path: ellipse(70% 100% at 50% 0%);
+      z-index: -1;
+      opacity: 0.9;
+    }
+
+    /* ==================== 侧边导航 ==================== */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 280px;
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border-color);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform var(--transition-normal);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px 24px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 24px;
+    }
+
+    .sidebar-brand-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .sidebar-brand-text {
+      flex: 1;
+    }
+
+    .sidebar-brand-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+    }
+
+    .sidebar-brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--primary-light);
+      color: var(--primary-color);
+    }
+
+    .nav-item-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .sidebar-footer {
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--success-bg);
+      border-radius: var(--radius-md);
+      color: var(--success-color);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success-color);
+      border-radius: var(--radius-full);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+
+    /* ==================== 主内容区 ==================== */
+    .main-content {
+      margin-left: 280px;
+      padding: 32px 40px;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      margin-bottom: 40px;
+    }
+
+    .page-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    /* ==================== 页面容器 ==================== */
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==================== 统计卡片 ==================== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: var(--bg-primary);
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+      transition: all var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--transition-normal);
+    }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-xl);
+      transform: translateY(-4px);
+    }
+
+    .stat-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .stat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .stat-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      flex-shrink: 0;
+    }
+
+    .stat-card-icon.primary { background: var(--primary-light); }
+    .stat-card-icon.success { background: var(--success-bg); }
+    .stat-card-icon.warning { background: var(--warning-bg); }
+    .stat-card-icon.info { background: var(--info-bg); }
+
+    .stat-card-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-card-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .stat-card-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.85rem;
+    }
+
+    .trend-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .trend-badge.up { background: var(--success-bg); color: var(--success-color); }
+    .trend-badge.down { background: var(--danger-bg); color: var(--danger-color); }
+
+    /* ==================== 内容网格 ==================== */
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 1200px) {
+      .content-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ==================== 卡片组件 ==================== */
+    .card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      transition: all var(--transition-normal);
+    }
+
+    .card:hover { box-shadow: var(--shadow-lg); }
+
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title-icon { font-size: 1.2rem; }
+
+    .card-body { padding: 24px; }
+
+    .card-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    /* ==================== 按钮 ==================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover { background: var(--border-color); }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+    }
+
+    /* ==================== 活动流 ==================== */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+    }
+
+    .activity-item:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-color);
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.success { background: var(--success-bg); }
+    .activity-icon.primary { background: var(--primary-light); }
+    .activity-icon.warning { background: var(--warning-bg); }
+    .activity-icon.info { background: var(--info-bg); }
+
+    .activity-content { flex: 1; min-width: 0; }
+
+    .activity-message {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .activity-message strong { font-weight: 600; }
+
+    .activity-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* ==================== 快速操作网格 ==================== */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .quick-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-align: center;
+    }
+
+    .quick-action-btn:hover {
+      border-color: var(--primary-color);
+      background: var(--primary-light);
+      transform: translateY(-2px);
+    }
+
+    .quick-action-icon { font-size: 2rem; }
+
+    .quick-action-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ==================== 扩展列表 ==================== */
+    .extension-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .extension-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+
+    .extension-item:hover { background: var(--bg-tertiary); }
+
+    .extension-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-primary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .extension-info { flex: 1; }
+
+    .extension-name { font-weight: 600; margin-bottom: 4px; }
+
+    .extension-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .extension-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .extension-status.running { background: var(--success-bg); color: var(--success-color); }
+    .extension-status.warning { background: var(--warning-bg); color: var(--warning-color); }
+
+    .extension-actions { display: flex; gap: 8px; }
+
+    /* ==================== 日志终端 ==================== */
+    .log-terminal {
+      background: #1e1e1e;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #2d2d2d;
+      border-bottom: 1px solid #3d3d3d;
+    }
+
+    .log-dots { display: flex; gap: 8px; }
+
+    .log-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: var(--radius-full);
+    }
+
+    .log-dot.red { background: #ff5f56; }
+    .log-dot.yellow { background: #ffbd2e; }
+    .log-dot.green { background: #27ca40; }
+
+    .log-body {
+      padding: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid #2d2d2d;
+    }
+
+    .log-entry:last-child { border-bottom: none; }
+
+    .log-timestamp {
+      color: #6b7280;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .log-level { font-weight: 600; min-width: 70px; }
+    .log-level.info { color: #3b82f6; }
+    .log-level.success { color: #10b981; }
+    .log-level.warning { color: #f59e0b; }
+    .log-level.error { color: #ef4444; }
+
+    .log-message { color: #e5e7eb; word-break: break-word; }
+
+    /* ==================== 表格样式 ==================== */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+      background: var(--bg-secondary);
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .data-table tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    /* ==================== 表单样式 ==================== */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      transition: all var(--transition-fast);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    /* ==================== 响应式 ==================== */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 24px 20px;
+      }
+
+      .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page-title { font-size: 1.75rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .quick-actions-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ==================== 工具类 ==================== */
+    .mb-4 { margin-bottom: 16px; }
+    .mb-8 { margin-bottom: 32px; }
+    .flex { display: flex; }
+    .gap-2 { gap: 8px; }
+    .gap-4 { gap: 16px; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+
+    /* ==================== 对话页面样式 ==================== */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 200px);
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chat-message {
+      display: flex;
+      gap: 12px;
+      max-width: 80%;
+      animation: messageSlideIn 0.3s ease;
+    }
+
+    @keyframes messageSlideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .chat-message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .chat-message-avatar.assistant {
+      background: var(--primary-gradient);
+    }
+
+    .chat-message-avatar.user {
+      background: var(--bg-tertiary);
+    }
+
+    .chat-message-content {
+      background: var(--bg-secondary);
+      padding: 12px 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .chat-message.user .chat-message-content {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .chat-message-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+
+    .chat-message-meta {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+
+    .chat-message.user .chat-message-meta {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .chat-input-area {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      resize: none;
+      font-family: inherit;
+      transition: all var(--transition-fast);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .chat-send-btn {
+      padding: 12px 24px;
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-send-btn:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .chat-send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: var(--radius-full);
+      background: var(--text-tertiary);
+      animation: typingBounce 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-8px); }
+    }
+  </style>
+</head>
+<body>
+  <!-- 背景装饰 -->
+  <div class="bg-decoration"></div>
+
+  <!-- 侧边导航 -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🦎</div>
+      <div class="sidebar-brand-text">
+        <div class="sidebar-brand-title">OpenClaw</div>
+        <div class="sidebar-brand-subtitle">Gateway Console</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-page="dashboard">
+        <span class="nav-item-icon">📊</span>
+        <span>仪表盘</span>
+      </button>
+      <button class="nav-item" data-page="chat">
+        <span class="nav-item-icon">💭</span>
+        <span>对话</span>
+      </button>
+      <button class="nav-item" data-page="sessions">
+        <span class="nav-item-icon">💬</span>
+        <span>会话管理</span>
+      </button>
+      <button class="nav-item" data-page="extensions">
+        <span class="nav-item-icon">🔌</span>
+        <span>扩展管理</span>
+      </button>
+      <button class="nav-item" data-page="config">
+        <span class="nav-item-icon">⚙️</span>
+        <span>系统配置</span>
+      </button>
+      <button class="nav-item" data-page="logs">
+        <span class="nav-item-icon">📜</span>
+        <span>日志查看</span>
+      </button>
+      <button class="nav-item" data-page="cron">
+        <span class="nav-item-icon">📅</span>
+        <span>定时任务</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span>Gateway 运行中</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- ==================== 仪表盘页面 ==================== -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <h1 class="page-title">欢迎回来</h1>
+        <p class="page-subtitle">这里是你的 OpenClaw Gateway 智能控制台</p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div>
+              <div class="stat-card-value">99.9%</div>
+              <div class="stat-card-label">正常运行时间</div>
+            </div>
+            <div class="stat-card-icon success">✅</div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-badge up">↑ 0.2%</span>
+            <span style="color: var(--text-secondary);">过去 30 天</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div>
+              <div class="stat-card-value">3</div>
+              <div class="stat-card-label">活跃会话</div>
+            </div>
+            <div class="stat-card-icon primary">💬</div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-badge up">↑ 2</span>
+            <span style="color: var(--text-secondary);">较上小时</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div>
+              <div class="stat-card-value">12.5K</div>
+              <div class="stat-card-label">今日 Token</div>
+            </div>
+            <div class="stat-card-icon warning">📊</div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-badge down">↓ 8%</span>
+            <span style="color: var(--text-secondary);">较昨日</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div>
+              <div class="stat-card-value">5</div>
+              <div class="stat-card-label">已加载扩展</div>
+            </div>
+            <div class="stat-card-icon info">🔌</div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-badge up">全部正常</span>
+            <span style="color: var(--text-secondary);">Feishu, DingTalk...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 内容网格 -->
+      <div class="content-grid">
+        <!-- 最近活动 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon">🕐</span>
+              <span>最近活动</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="navigateTo('logs')">查看全部</button>
+          </div>
+          <div class="card-body">
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-icon success">✓</div>
+                <div class="activity-content">
+                  <div class="activity-message">
+                    <strong>Feishu 消息</strong> 成功发送
+                  </div>
+                  <div class="activity-meta">
+                    <span>2 分钟前</span>
+                  </div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon primary">📝</div>
+                <div class="activity-content">
+                  <div class="activity-message">
+                    <strong>扩展加载</strong> DingTalk Connector
+                  </div>
+                  <div class="activity-meta">
+                    <span>10 分钟前</span>
+                  </div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon warning">⚠️</div>
+                <div class="activity-content">
+                  <div class="activity-message">
+                    <strong>API 警告</strong> DingTalk 文件下载 404
+                  </div>
+                  <div class="activity-meta">
+                    <span>1 小时前</span>
+                  </div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon info">🔄</div>
+                <div class="activity-content">
+                  <div class="activity-message">
+                    <strong>Gateway 重启</strong> 配置更新完成
+                  </div>
+                  <div class="activity-meta">
+                    <span>2 小时前</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon">⚡</span>
+              <span>快速操作</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="quick-actions-grid">
+              <div class="quick-action-btn" onclick="restartGateway()">
+                <span class="quick-action-icon">🔄</span>
+                <span class="quick-action-label">重启 Gateway</span>
+              </div>
+              <div class="quick-action-btn" onclick="checkStatus()">
+                <span class="quick-action-icon">📊</span>
+                <span class="quick-action-label">检查状态</span>
+              </div>
+              <div class="quick-action-btn" onclick="navigateTo('logs')">
+                <span class="quick-action-icon">📋</span>
+                <span class="quick-action-label">查看日志</span>
+              </div>
+              <div class="quick-action-btn" onclick="reloadConfig()">
+                <span class="quick-action-icon">⚙️</span>
+                <span class="quick-action-label">重载配置</span>
+              </div>
+              <div class="quick-action-btn" onclick="clearCache()">
+                <span class="quick-action-icon">🗑️</span>
+                <span class="quick-action-label">清理缓存</span>
+              </div>
+              <div class="quick-action-btn" onclick="navigateTo('config')">
+                <span class="quick-action-icon">🔧</span>
+                <span class="quick-action-label">系统设置</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 扩展列表 -->
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon">🔌</span>
+              <span>已加载扩展</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="navigateTo('extensions')">管理扩展</button>
+          </div>
+          <div class="card-body">
+            <div class="extension-list">
+              <div class="extension-item">
+                <div class="extension-icon">📱</div>
+                <div class="extension-info">
+                  <div class="extension-name">Feishu</div>
+                  <div class="extension-meta">
+                    <span>v0.1.6</span>
+                    <span class="extension-status running">● 运行中</span>
+                  </div>
+                </div>
+                <div class="extension-actions">
+                  <button class="btn btn-outline btn-sm">配置</button>
+                  <button class="btn btn-outline btn-sm">日志</button>
+                </div>
+              </div>
+              <div class="extension-item">
+                <div class="extension-icon">💼</div>
+                <div class="extension-info">
+                  <div class="extension-name">DingTalk Connector</div>
+                  <div class="extension-meta">
+                    <span>v1.0.0</span>
+                    <span class="extension-status running">● 运行中</span>
+                  </div>
+                </div>
+                <div class="extension-actions">
+                  <button class="btn btn-outline btn-sm">配置</button>
+                  <button class="btn btn-outline btn-sm">日志</button>
+                </div>
+              </div>
+              <div class="extension-item">
+                <div class="extension-icon">🐧</div>
+                <div class="extension-info">
+                  <div class="extension-name">QQBot</div>
+                  <div class="extension-meta">
+                    <span>v2.0.0</span>
+                    <span class="extension-status running">● 运行中</span>
+                  </div>
+                </div>
+                <div class="extension-actions">
+                  <button class="btn btn-outline btn-sm">配置</button>
+                  <button class="btn btn-outline btn-sm">日志</button>
+                </div>
+              </div>
+              <div class="extension-item">
+                <div class="extension-icon">🫧</div>
+                <div class="extension-info">
+                  <div class="extension-name">BlueBubbles</div>
+                  <div class="extension-meta">
+                    <span>v0.9.0</span>
+                    <span class="extension-status warning">⚠️ 警告</span>
+                  </div>
+                </div>
+                <div class="extension-actions">
+                  <button class="btn btn-outline btn-sm">配置</button>
+                  <button class="btn btn-outline btn-sm">日志</button>
+                </div>
+              </div>
+              <div class="extension-item">
+                <div class="extension-icon">🎨</div>
+                <div class="extension-info">
+                  <div class="extension-name">Canvas</div>
+                  <div class="extension-meta">
+                    <span>v1.0.0</span>
+                    <span class="extension-status running">● 运行中</span>
+                  </div>
+                </div>
+                <div class="extension-actions">
+                  <button class="btn btn-outline btn-sm">配置</button>
+                  <button class="btn btn-outline btn-sm">日志</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 系统日志 -->
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon">📜</span>
+              <span>实时日志</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-outline btn-sm" onclick="refreshLogs()">刷新</button>
+              <button class="btn btn-outline btn-sm" onclick="clearLogs()">清空</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="log-terminal">
+              <div class="log-header">
+                <div class="log-dots">
+                  <div class="log-dot red"></div>
+                  <div class="log-dot yellow"></div>
+                  <div class="log-dot green"></div>
+                </div>
+              </div>
+              <div class="log-body" id="log-container">
+                <div class="log-entry">
+                  <span class="log-timestamp">20:24:37</span>
+                  <span class="log-level success">[SUCCESS]</span>
+                  <span class="log-message">Gateway 重启成功 - PID: 251492</span>
+                </div>
+                <div class="log-entry">
+                  <span class="log-timestamp">20:24:36</span>
+                  <span class="log-level info">[INFO]</span>
+                  <span class="log-message">Feishu WebSocket 连接已建立</span>
+                </div>
+                <div class="log-entry">
+                  <span class="log-timestamp">20:24:35</span>
+                  <span class="log-level info">[INFO]</span>
+                  <span class="log-message">加载扩展：DingTalk Connector v1.0.0</span>
+                </div>
+                <div class="log-entry">
+                  <span class="log-timestamp">20:24:34</span>
+                  <span class="log-level warning">[WARN]</span>
+                  <span class="log-message">DingTalk API 404: /v1.0/im/chatFiles/downloadUrls</span>
+                </div>
+                <div class="log-entry">
+                  <span class="log-timestamp">20:24:33</span>
+                  <span class="log-level info">[INFO]</span>
+                  <span class="log-message">Gateway 服务启动 - 端口：18789</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 对话页面 ==================== -->
+    <div id="page-chat" class="page">
+      <div class="page-header">
+        <h1 class="page-title">对话</h1>
+        <p class="page-subtitle">与 Gateway 智能助手直接对话</p>
+      </div>
+
+      <div class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+          <!-- 欢迎消息 -->
+          <div class="chat-message assistant">
+            <div class="chat-message-avatar assistant">🦎</div>
+            <div class="chat-message-content">
+              <div class="chat-message-text">你好！我是 OpenClaw Gateway 助手，有什么可以帮你的吗？</div>
+              <div class="chat-message-meta">刚刚</div>
+            </div>
+          </div>
+
+          <!-- 示例对话 -->
+          <div class="chat-message user">
+            <div class="chat-message-avatar user">👤</div>
+            <div class="chat-message-content">
+              <div class="chat-message-text">查看当前系统状态</div>
+              <div class="chat-message-meta">2 分钟前</div>
+            </div>
+          </div>
+
+          <div class="chat-message assistant">
+            <div class="chat-message-avatar assistant">🦎</div>
+            <div class="chat-message-content">
+              <div class="chat-message-text">系统状态正常！Gateway 运行中，PID: 251492，端口：18789。已加载 5 个扩展，3 个活跃会话。需要查看详细报告吗？</div>
+              <div class="chat-message-meta">2 分钟前</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <textarea class="chat-input" id="chat-input" placeholder="输入消息... (按 Enter 发送，Shift+Enter 换行)" rows="1"></textarea>
+          <button class="chat-send-btn" id="chat-send-btn" onclick="sendMessage()">
+            <span>📤</span>
+            <span>发送</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 会话管理页面 ==================== -->
+    <div id="page-sessions" class="page">
+      <div class="page-header">
+        <h1 class="page-title">会话管理</h1>
+        <p class="page-subtitle">查看和管理所有活跃会话</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">💬</span>
+            <span>活跃会话列表</span>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="createNewSession()">
+            <span>➕</span> 新建会话
+          </button>
+        </div>
+        <div class="card-body">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>会话 ID</th>
+                <th>类型</th>
+                <th>状态</th>
+                <th>最后活动</th>
+                <th>消息数</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>main</code></td>
+                <td>主会话</td>
+                <td><span class="extension-status running">● 活跃</span></td>
+                <td>刚刚</td>
+                <td>1,234</td>
+                <td>
+                  <button class="btn btn-outline btn-sm">查看</button>
+                  <button class="btn btn-outline btn-sm">导出</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>agent:github-triage:1</code></td>
+                <td>子代理</td>
+                <td><span class="extension-status running">● 运行中</span></td>
+                <td>2 分钟前</td>
+                <td>45</td>
+                <td>
+                  <button class="btn btn-outline btn-sm">查看</button>
+                  <button class="btn btn-outline btn-sm">终止</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>agent:browser:1</code></td>
+                <td>子代理</td>
+                <td><span class="extension-status running">● 空闲</span></td>
+                <td>10 分钟前</td>
+                <td>28</td>
+                <td>
+                  <button class="btn btn-outline btn-sm">查看</button>
+                  <button class="btn btn-outline btn-sm">终止</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 扩展管理页面 ==================== -->
+    <div id="page-extensions" class="page">
+      <div class="page-header">
+        <h1 class="page-title">扩展管理</h1>
+        <p class="page-subtitle">管理已安装的扩展和插件</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">🔌</span>
+            <span>已安装扩展</span>
+          </div>
+          <button class="btn btn-primary btn-sm">
+            <span>➕</span> 安装扩展
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="extension-list">
+            <div class="extension-item">
+              <div class="extension-icon">📱</div>
+              <div class="extension-info">
+                <div class="extension-name">Feishu</div>
+                <div class="extension-meta">
+                  <span>v0.1.6</span>
+                  <span class="extension-status running">● 运行中</span>
+                  <span>飞书消息通道</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm" onclick="showToast('Feishu 配置页面开发中...')">配置</button>
+                <button class="btn btn-outline btn-sm" onclick="showToast('Feishu 日志查看开发中...')">日志</button>
+                <button class="btn btn-outline btn-sm" style="color: var(--danger-color); border-color: var(--danger-color);">卸载</button>
+              </div>
+            </div>
+            <div class="extension-item">
+              <div class="extension-icon">💼</div>
+              <div class="extension-info">
+                <div class="extension-name">DingTalk Connector</div>
+                <div class="extension-meta">
+                  <span>v1.0.0</span>
+                  <span class="extension-status running">● 运行中</span>
+                  <span>钉钉连接器</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm" onclick="showToast('DingTalk 配置页面开发中...')">配置</button>
+                <button class="btn btn-outline btn-sm" onclick="showToast('DingTalk 日志查看开发中...')">日志</button>
+                <button class="btn btn-outline btn-sm" style="color: var(--danger-color); border-color: var(--danger-color);">卸载</button>
+              </div>
+            </div>
+            <div class="extension-item">
+              <div class="extension-icon">🐧</div>
+              <div class="extension-info">
+                <div class="extension-name">QQBot</div>
+                <div class="extension-meta">
+                  <span>v2.0.0</span>
+                  <span class="extension-status running">● 运行中</span>
+                  <span>QQ 机器人</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm" onclick="showToast('QQBot 配置页面开发中...')">配置</button>
+                <button class="btn btn-outline btn-sm" onclick="showToast('QQBot 日志查看开发中...')">日志</button>
+                <button class="btn btn-outline btn-sm" style="color: var(--danger-color); border-color: var(--danger-color);">卸载</button>
+              </div>
+            </div>
+            <div class="extension-item">
+              <div class="extension-icon">🫧</div>
+              <div class="extension-info">
+                <div class="extension-name">BlueBubbles</div>
+                <div class="extension-meta">
+                  <span>v0.9.0</span>
+                  <span class="extension-status warning">⚠️ 警告</span>
+                  <span>iMessage 通道</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm" onclick="showToast('BlueBubbles 配置页面开发中...')">配置</button>
+                <button class="btn btn-outline btn-sm" onclick="showToast('BlueBubbles 日志查看开发中...')">日志</button>
+                <button class="btn btn-outline btn-sm" style="color: var(--danger-color); border-color: var(--danger-color);">卸载</button>
+              </div>
+            </div>
+            <div class="extension-item">
+              <div class="extension-icon">🎨</div>
+              <div class="extension-info">
+                <div class="extension-name">Canvas</div>
+                <div class="extension-meta">
+                  <span>v1.0.0</span>
+                  <span class="extension-status running">● 运行中</span>
+                  <span>画布渲染</span>
+                </div>
+              </div>
+              <div class="extension-actions">
+                <button class="btn btn-outline btn-sm" onclick="showToast('Canvas 配置页面开发中...')">配置</button>
+                <button class="btn btn-outline btn-sm" onclick="showToast('Canvas 日志查看开发中...')">日志</button>
+                <button class="btn btn-outline btn-sm" style="color: var(--danger-color); border-color: var(--danger-color);">卸载</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 系统配置页面 ==================== -->
+    <div id="page-config" class="page">
+      <div class="page-header">
+        <h1 class="page-title">系统配置</h1>
+        <p class="page-subtitle">管理 Gateway 配置和设置</p>
+      </div>
+
+      <div class="content-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon">⚙️</span>
+              <span>基础配置</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Gateway 端口</label>
+              <input type="number" class="form-input" value="18789" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">绑定地址</label>
+              <input type="text" class="form-input" value="127.0.0.1" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">默认模型</label>
+              <input type="text" class="form-input" value="qwen3.5-plus" />
+            </div>
+            <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon">🔔</span>
+              <span>通知设置</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">心跳检查间隔 (分钟)</label>
+              <input type="number" class="form-input" value="30" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">日志保留天数</label>
+              <input type="number" class="form-input" value="7" />
+            </div>
+            <button class="btn btn-primary" onclick="saveConfig()">保存设置</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 日志查看页面 ==================== -->
+    <div id="page-logs" class="page">
+      <div class="page-header">
+        <h1 class="page-title">日志查看</h1>
+        <p class="page-subtitle">查看系统运行日志</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">📜</span>
+            <span>实时日志流</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <select class="form-input" style="width: auto;">
+              <option>所有级别</option>
+              <option>INFO</option>
+              <option>WARN</option>
+              <option>ERROR</option>
+              <option>SUCCESS</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="refreshLogs()">刷新</button>
+            <button class="btn btn-outline btn-sm" onclick="clearLogs()">清空</button>
+            <button class="btn btn-outline btn-sm" onclick="downloadLogs()">下载</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="log-terminal">
+            <div class="log-header">
+              <div class="log-dots">
+                <div class="log-dot red"></div>
+                <div class="log-dot yellow"></div>
+                <div class="log-dot green"></div>
+              </div>
+            </div>
+            <div class="log-body" id="log-container-full" style="max-height: 600px;">
+              <!-- 日志内容将通过 JS 复制 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 定时任务页面 ==================== -->
+    <div id="page-cron" class="page">
+      <div class="page-header">
+        <h1 class="page-title">定时任务</h1>
+        <p class="page-subtitle">管理 Cron 任务和定时作业</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">📅</span>
+            <span>已配置任务</span>
+          </div>
+          <button class="btn btn-primary btn-sm">
+            <span>➕</span> 新建任务
+          </button>
+        </div>
+        <div class="card-body">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>任务名称</th>
+                <th>类型</th>
+                <th>调度表达式</th>
+                <th>状态</th>
+                <th>上次运行</th>
+                <th>下次运行</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>heartbeat-check</td>
+                <td>周期性</td>
+                <td><code>*/30 * * * *</code></td>
+                <td><span class="extension-status running">● 启用</span></td>
+                <td>11:30:00</td>
+                <td>12:00:00</td>
+                <td>
+                  <button class="btn btn-outline btn-sm">运行</button>
+                  <button class="btn btn-outline btn-sm">编辑</button>
+                  <button class="btn btn-outline btn-sm">禁用</button>
+                </td>
+              </tr>
+              <tr>
+                <td>daily-backup</td>
+                <td>周期性</td>
+                <td><code>0 2 * * *</code></td>
+                <td><span class="extension-status running">● 启用</span></td>
+                <td>今天 02:00</td>
+                <td>明天 02:00</td>
+                <td>
+                  <button class="btn btn-outline btn-sm">运行</button>
+                  <button class="btn btn-outline btn-sm">编辑</button>
+                  <button class="btn btn-outline btn-sm">禁用</button>
+                </td>
+              </tr>
+              <tr>
+                <td>weekly-report</td>
+                <td>周期性</td>
+                <td><code>0 9 * * 1</code></td>
+                <td><span class="extension-status running">● 启用</span></td>
+                <td>周一 09:00</td>
+                <td>下周一 09:00</td>
+                <td>
+                  <button class="btn btn-outline btn-sm">运行</button>
+                  <button class="btn btn-outline btn-sm">编辑</button>
+                  <button class="btn btn-outline btn-sm">禁用</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast 通知 -->
+  <div id="toast" style="position: fixed; bottom: 24px; right: 24px; background: var(--bg-primary); padding: 16px 24px; border-radius: var(--radius-md); box-shadow: var(--shadow-xl); border-left: 4px solid var(--primary-color); transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 1000;">
+    <span id="toast-message"></span>
+  </div>
+
+  <script>
+    // ==================== 路由系统 ====================
+    function navigateTo(pageId) {
+      // 更新导航状态
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.page === pageId) {
+          item.classList.add('active');
+        }
+      });
+
+      // 切换页面
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+      document.getElementById('page-' + pageId).classList.add('active');
+
+      // 滚动到顶部
+      window.scrollTo(0, 0);
+
+      // 如果是日志页面，复制日志内容
+      if (pageId === 'logs') {
+        syncLogs();
+      }
+    }
+
+    // ==================== 对话系统 ====================
+    function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const sendBtn = document.getElementById('chat-send-btn');
+      const messagesContainer = document.getElementById('chat-messages');
+      
+      const message = input.value.trim();
+      if (!message) return;
+
+      // 添加用户消息
+      const now = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      const userMessage = document.createElement('div');
+      userMessage.className = 'chat-message user';
+      userMessage.innerHTML = `
+        <div class="chat-message-avatar user">👤</div>
+        <div class="chat-message-content">
+          <div class="chat-message-text">${escapeHtml(message)}</div>
+          <div class="chat-message-meta">${now}</div>
+        </div>
+      `;
+      messagesContainer.appendChild(userMessage);
+
+      // 清空输入框
+      input.value = '';
+      input.style.height = 'auto';
+
+      // 滚动到底部
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      // 禁用发送按钮
+      sendBtn.disabled = true;
+
+      // 显示输入中指示器
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'chat-message assistant';
+      typingIndicator.id = 'typing-indicator';
+      typingIndicator.innerHTML = `
+        <div class="chat-message-avatar assistant">🦎</div>
+        <div class="chat-message-content">
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      `;
+      messagesContainer.appendChild(typingIndicator);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      // 模拟 AI 回复
+      setTimeout(() => {
+        // 移除输入指示器
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) indicator.remove();
+
+        // 生成回复
+        const responses = [
+          '好的，我已经收到你的消息了！',
+          '这个问题我需要查询一下系统状态...',
+          '明白了！让我帮你处理这个请求。',
+          '收到！正在为你执行相关操作。',
+          '好的，我已经记录下来了。',
+          '没问题！这个功能已经在开发中了。',
+          '感谢反馈！我会持续改进的。',
+          '让我想想... 嗯，我觉得可以这样处理。'
+        ];
+        const response = responses[Math.floor(Math.random() * responses.length)];
+
+        const assistantMessage = document.createElement('div');
+        assistantMessage.className = 'chat-message assistant';
+        assistantMessage.innerHTML = `
+          <div class="chat-message-avatar assistant">🦎</div>
+          <div class="chat-message-content">
+            <div class="chat-message-text">${response}</div>
+            <div class="chat-message-meta">${now}</div>
+          </div>
+        `;
+        messagesContainer.appendChild(assistantMessage);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // 启用发送按钮
+        sendBtn.disabled = false;
+        input.focus();
+      }, 1500 + Math.random() * 1000);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 输入框自动调整高度
+    function setupChatInput() {
+      const input = document.getElementById('chat-input');
+      if (!input) return;
+
+      input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+      });
+
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+
+    // ==================== Toast 通知 ====================
+    function showToast(message, duration = 3000) {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toast-message');
+      toastMessage.textContent = message;
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+
+      setTimeout(() => {
+        toast.style.transform = 'translateY(100px)';
+        toast.style.opacity = '0';
+      }, duration);
+    }
+
+    // ==================== 日志系统 ====================
+    const logLevels = {
+      'success': { class: 'log-level success', text: '[SUCCESS]' },
+      'info': { class: 'log-level info', text: '[INFO]' },
+      'warning': { class: 'log-level warning', text: '[WARN]' },
+      'error': { class: 'log-level error', text: '[ERROR]' }
+    };
+
+    function addLogEntry(type, message) {
+      const container = document.getElementById('log-container');
+      const now = new Date().toLocaleTimeString('en-GB');
+      const level = logLevels[type] || logLevels['info'];
+
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.innerHTML = `
+        <span class="log-timestamp">${now}</span>
+        <span class="${level.class}">${level.text}</span>
+        <span class="log-message">${message}</span>
+      `;
+
+      container.insertBefore(div, container.firstChild);
+
+      // 保持最多 100 条日志
+      while (container.children.length > 100) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    function syncLogs() {
+      const source = document.getElementById('log-container');
+      const target = document.getElementById('log-container-full');
+      if (source && target) {
+        target.innerHTML = source.innerHTML;
+      }
+    }
+
+    function refreshLogs() {
+      addLogEntry('info', '日志已刷新');
+      showToast('日志已刷新');
+    }
+
+    function clearLogs() {
+      if (confirm('确定要清空所有日志吗？')) {
+        const container = document.getElementById('log-container');
+        container.innerHTML = '';
+        addLogEntry('info', '日志已清空');
+        showToast('日志已清空');
+      }
+    }
+
+    function downloadLogs() {
+      showToast('日志下载功能开发中...');
+    }
+
+    // ==================== 快速操作 ====================
+    function restartGateway() {
+      if (confirm('确定要重启 Gateway 吗？\n\n这将会暂时中断所有服务。')) {
+        addLogEntry('info', '正在重启 Gateway...');
+        showToast('正在重启 Gateway...', 2000);
+        setTimeout(() => {
+          addLogEntry('success', 'Gateway 重启成功！新 PID: ' + Math.floor(Math.random() * 100000 + 200000));
+          showToast('Gateway 重启成功！');
+        }, 2000);
+      }
+    }
+
+    function checkStatus() {
+      addLogEntry('info', '正在检查系统状态...');
+      showToast('正在检查系统状态...', 1500);
+      setTimeout(() => {
+        addLogEntry('success', '系统状态正常 - 所有扩展运行中');
+        addLogEntry('info', 'Gateway 响应时间：23ms');
+        addLogEntry('info', '内存使用：156MB / 512MB');
+        showToast('系统状态正常');
+      }, 1000);
+    }
+
+    function reloadConfig() {
+      if (confirm('确定要重载配置吗？\n\n这将应用最新的配置文件更改。')) {
+        addLogEntry('info', '正在重载配置...');
+        showToast('正在重载配置...', 1500);
+        setTimeout(() => {
+          addLogEntry('success', '配置重载成功！');
+          showToast('配置重载成功！');
+        }, 1500);
+      }
+    }
+
+    function clearCache() {
+      if (confirm('确定要清理缓存吗？')) {
+        addLogEntry('info', '正在清理缓存...');
+        showToast('正在清理缓存...', 1000);
+        setTimeout(() => {
+          addLogEntry('success', '缓存清理完成！释放 45MB 空间');
+          showToast('缓存清理完成！');
+        }, 1000);
+      }
+    }
+
+    function createNewSession() {
+      showToast('新建会话功能开发中...');
+    }
+
+    function saveConfig() {
+      addLogEntry('info', '正在保存配置...');
+      showToast('正在保存配置...', 1500);
+      setTimeout(() => {
+        addLogEntry('success', '配置保存成功！');
+        showToast('配置保存成功！');
+      }, 1500);
+    }
+
+    // ==================== 导航事件绑定 ====================
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        const pageId = this.dataset.page;
+        navigateTo(pageId);
+      });
+    });
+
+    // ==================== 模拟实时数据更新 ====================
+    setInterval(() => {
+      const statCards = document.querySelectorAll('.stat-card-value');
+      if (Math.random() > 0.7 && statCards[2]) {
+        const tokenCard = statCards[2];
+        const current = parseFloat(tokenCard.textContent.replace('K', ''));
+        const newValue = (current + (Math.random() - 0.3) * 0.5).toFixed(1);
+        tokenCard.textContent = Math.max(0, newValue) + 'K';
+      }
+    }, 3000);
+
+    // 模拟随机日志
+    const sampleLogs = [
+      { type: 'info', msg: '处理 incoming message from Feishu' },
+      { type: 'success', msg: '消息发送成功 - message_id: om_' + Math.random().toString(36).substr(2, 9) },
+      { type: 'info', msg: 'Session heartbeat check - all sessions healthy' },
+      { type: 'warning', msg: 'API rate limit approaching (85% used)' },
+      { type: 'info', msg: 'Cron job executed: daily-backup' }
+    ];
+
+    setInterval(() => {
+      if (Math.random() > 0.6) {
+        const log = sampleLogs[Math.floor(Math.random() * sampleLogs.length)];
+        addLogEntry(log.type, log.msg);
+      }
+    }, 5000);
+
+    // ==================== 页面加载完成 ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🦎 OpenClaw Gateway Dashboard v4.0 已加载');
+      addLogEntry('success', 'Dashboard v4.0 初始化完成 - 路由系统已启用');
+      showToast('欢迎使用 OpenClaw Gateway v4.0', 4000);
+      setupChatInput();
+    });
+  </script>
+</body>
+</html>

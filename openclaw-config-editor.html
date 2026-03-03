@@ -1,0 +1,1405 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenClaw 配置编辑器 - 便携版</title>
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦎</text></svg>" />
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --primary-color: #667eea;
+      --primary-light: rgba(102, 126, 234, 0.1);
+      --success-color: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --warning-color: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --danger-color: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.1);
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --border-color: #e5e7eb;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+        --bg-primary: #1f2937;
+        --bg-secondary: #111827;
+        --border-color: #4b5563;
+      }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 24px;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding: 24px;
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .header p { color: var(--text-secondary); }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--primary-light);
+      color: var(--primary-color);
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 8px;
+      margin-right: 8px;
+    }
+
+    .card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+    }
+
+    .btn-success {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+
+    .model-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .model-item {
+      background: var(--bg-secondary);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--border-color);
+    }
+
+    .model-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .model-item-title {
+      font-weight: 600;
+      font-size: 1rem;
+      word-break: break-all;
+    }
+
+    .model-item-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .model-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .model-form-grid { grid-template-columns: 1fr; }
+    }
+
+    .full-width { grid-column: 1 / -1; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-primary);
+      padding: 16px 24px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      border-left: 4px solid var(--success-color);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 1000;
+      max-width: 400px;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-left-color: var(--danger-color); }
+
+    .help-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .help-code {
+      background: var(--bg-secondary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 12px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab:hover { background: var(--bg-secondary); }
+    .tab.active { background: var(--primary-light); color: var(--primary-color); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .file-drop-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg-secondary);
+    }
+
+    .file-drop-zone:hover {
+      border-color: var(--primary-color);
+      background: var(--primary-light);
+    }
+
+    .file-drop-zone.dragover {
+      border-color: var(--primary-color);
+      background: var(--primary-light);
+    }
+
+    .quick-start {
+      background: var(--success-bg);
+      border: 1px solid var(--success-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .quick-start h3 {
+      color: var(--success-color);
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .quick-start ol {
+      margin-left: 20px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .quick-start li { margin-bottom: 4px; }
+
+    .platform-hint {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .platform-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .template-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-card:hover {
+      border-color: var(--primary-color);
+      background: var(--primary-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .template-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .template-card-icon {
+      font-size: 2rem;
+    }
+
+    .template-card-title {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .template-card-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .template-card-features {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .template-card-features li {
+      margin-bottom: 4px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .provider-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🦎 OpenClaw 配置编辑器</h1>
+      <p>可视化编辑 OpenClaw 配置文件，告别繁琐的 JSON 格式</p>
+      <div style="margin-top: 12px;">
+        <span class="badge">✨ 便携版</span>
+        <span class="badge">🚀 预置模板</span>
+      </div>
+      
+      <div class="platform-hint">
+        <div class="platform-item">💻 支持所有现代浏览器</div>
+        <div class="platform-item">📁 纯本地运行，数据不上传</div>
+        <div class="platform-item">🔌 双击即可使用</div>
+        <div class="platform-item">🎯 预置常用模型模板</div>
+      </div>
+    </div>
+
+    <!-- 快速开始 -->
+    <div class="quick-start">
+      <h3>🚀 快速开始</h3>
+      <ol>
+        <li>点击"📂 打开配置文件"或直接将文件拖拽到下方区域</li>
+        <li>在选项卡中修改配置（模型、Gateway、消息通道等）</li>
+        <li>点击"💾 保存配置"下载编辑好的文件</li>
+        <li>将下载的文件替换到 <code class="help-code">~/.openclaw/openclaw.json</code></li>
+        <li>运行 <code class="help-code">openclaw gateway restart</code> 重启生效</li>
+      </ol>
+    </div>
+
+    <!-- 文件操作 -->
+    <div class="card">
+      <div class="card-title">📁 配置文件</div>
+      
+      <input type="file" id="file-input" accept=".json" style="display: none;" onchange="loadFile(event)">
+      
+      <div class="file-drop-zone" onclick="document.getElementById('file-input').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <div style="font-size: 2rem; margin-bottom: 8px;">📂</div>
+        <div style="font-weight: 600; margin-bottom: 4px;">点击选择或拖拽配置文件到此处</div>
+        <div class="help-text">支持文件：<code class="help-code">openclaw.json</code></div>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+          📂 打开配置文件
+        </button>
+        <button class="btn btn-secondary" onclick="loadDefaultConfig()">
+          🔄 加载默认配置
+        </button>
+        <button class="btn btn-success" onclick="saveConfig()">
+          💾 保存配置
+        </button>
+        <button class="btn btn-secondary" onclick="downloadConfig()">
+          ⬇️ 下载备份
+        </button>
+        <button class="btn btn-secondary" onclick="copyToClipboard()">
+          📋 复制 JSON
+        </button>
+      </div>
+
+      <div class="help-text" style="margin-top: 12px;">
+        💡 <strong>配置文件位置：</strong>
+        <br/>
+        <code class="help-code">~/.openclaw/openclaw.json</code>
+        <br/><br/>
+        💡 <strong>跨平台路径说明：</strong>
+        <br/>
+        • Linux/macOS: <code class="help-code">/home/用户名/.openclaw/openclaw.json</code> 或 <code class="help-code">~/.openclaw/openclaw.json</code>
+        <br/>
+        • Windows: <code class="help-code">C:\Users\用户名\.openclaw\openclaw.json</code>
+      </div>
+    </div>
+
+    <!-- 配置选项卡 -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('models')">🤖 模型配置</div>
+      <div class="tab" onclick="switchTab('agents')">👤 代理设置</div>
+      <div class="tab" onclick="switchTab('gateway')">🌐 Gateway</div>
+      <div class="tab" onclick="switchTab('channels')">📱 消息通道</div>
+      <div class="tab" onclick="switchTab('tools')">🔧 工具</div>
+      <div class="tab" onclick="switchTab('preview')">📄 JSON 预览</div>
+    </div>
+
+    <!-- 模型配置 -->
+    <div id="tab-models" class="tab-content active">
+      <div class="card">
+        <div class="card-title">
+          🤖 模型提供商
+          <button class="btn btn-primary btn-sm" onclick="showAddProviderModal()" style="margin-left: auto;">
+            ➕ 添加提供商
+          </button>
+        </div>
+        <div id="model-providers" class="model-list"></div>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <div class="card-title">🎯 常用模型模板（一键添加）</div>
+        <div class="help-text" style="margin-bottom: 16px;">
+          点击下方模板快速添加预配置的模型提供商，只需填写 API Key 即可使用
+        </div>
+        <div class="template-grid" id="provider-templates"></div>
+      </div>
+    </div>
+
+    <!-- 代理设置 -->
+    <div id="tab-agents" class="tab-content">
+      <div class="card">
+        <div class="card-title">👤 默认代理设置</div>
+        <div class="model-form-grid">
+          <div class="form-group full-width">
+            <label class="form-label">工作目录</label>
+            <input type="text" class="form-input" id="agent-workspace" placeholder="/path/to/workspace">
+            <div class="help-text">Agent 运行时的默认工作目录</div>
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">主模型</label>
+            <input type="text" class="form-input" id="agent-primary-model" placeholder="provider/model-name">
+            <div class="help-text">格式：提供商 ID/模型 ID，如：bailian/qwen3.5-plus</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">最大并发数</label>
+            <input type="number" class="form-input" id="agent-max-concurrent" value="4" min="1" max="16">
+          </div>
+          <div class="form-group">
+            <label class="form-label">子代理最大并发</label>
+            <input type="number" class="form-input" id="agent-subagent-max" value="8" min="1" max="32">
+          </div>
+          <div class="form-group">
+            <label class="form-label">压缩模式</label>
+            <select class="form-select" id="agent-compaction-mode">
+              <option value="safeguard">safeguard（安全模式）</option>
+              <option value="aggressive">aggressive（激进模式）</option>
+              <option value="disabled">disabled（禁用）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gateway 设置 -->
+    <div id="tab-gateway" class="tab-content">
+      <div class="card">
+        <div class="card-title">🌐 Gateway 配置</div>
+        <div class="model-form-grid">
+          <div class="form-group">
+            <label class="form-label">端口</label>
+            <input type="number" class="form-input" id="gateway-port" value="18789" min="1024" max="65535">
+            <div class="help-text">Gateway 服务监听端口</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">绑定模式</label>
+            <select class="form-select" id="gateway-bind">
+              <option value="loopback">仅本地 (loopback)</option>
+              <option value="all">所有接口 (all)</option>
+            </select>
+            <div class="help-text">loopback=127.0.0.1，all=0.0.0.0</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">认证模式</label>
+            <select class="form-select" id="gateway-auth-mode">
+              <option value="token">Token 认证</option>
+              <option value="none">无认证</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">运行模式</label>
+            <select class="form-select" id="gateway-mode">
+              <option value="local">本地模式</option>
+              <option value="remote">远程模式</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">Gateway Token</label>
+            <input type="text" class="form-input" id="gateway-token" placeholder="留空则自动生成">
+            <div class="help-text">用于 Dashboard 和 API 访问认证，建议至少 20 位随机字符</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 消息通道 -->
+    <div id="tab-channels" class="tab-content">
+      <div class="card">
+        <div class="card-title">📱 飞书 (Feishu) 配置</div>
+        <div class="model-form-grid">
+          <div class="form-group">
+            <label class="form-label">启用</label>
+            <select class="form-select" id="feishu-enabled">
+              <option value="true">是</option>
+              <option value="false">否</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">App ID</label>
+            <input type="text" class="form-input" id="feishu-app-id" placeholder="cli_xxxxxxxxxxxxxxxx">
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">App Secret</label>
+            <input type="password" class="form-input" id="feishu-app-secret" placeholder="xxxxxxxxxxxxxxxx">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💬 钉钉 (DingTalk) 配置</div>
+        <div class="model-form-grid">
+          <div class="form-group">
+            <label class="form-label">启用</label>
+            <select class="form-select" id="dingtalk-enabled">
+              <option value="true">是</option>
+              <option value="false">否</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">Client ID</label>
+            <input type="text" class="form-input" id="dingtalk-client-id" placeholder="dingggwxxxxxxxxx">
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">Client Secret</label>
+            <input type="password" class="form-input" id="dingtalk-client-secret" placeholder="xxxxxxxxxxxxxxxx">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🐧 QQBot 配置</div>
+        <div class="model-form-grid">
+          <div class="form-group">
+            <label class="form-label">启用</label>
+            <select class="form-select" id="qqbot-enabled">
+              <option value="true">是</option>
+              <option value="false">否</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">App ID</label>
+            <input type="text" class="form-input" id="qqbot-app-id">
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">Client Secret</label>
+            <input type="password" class="form-input" id="qqbot-client-secret">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 工具设置 -->
+    <div id="tab-tools" class="tab-content">
+      <div class="card">
+        <div class="card-title">🔧 工具配置</div>
+        <div class="model-form-grid">
+          <div class="form-group">
+            <label class="form-label">工具配置文件</label>
+            <select class="form-select" id="tools-profile">
+              <option value="full">完整 (full) - 所有工具</option>
+              <option value="minimal">最小 (minimal) - 基础工具</option>
+              <option value="custom">自定义 (custom)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">网页搜索</label>
+            <select class="form-select" id="tools-web-search">
+              <option value="true">启用</option>
+              <option value="false">禁用</option>
+            </select>
+            <div class="help-text">允许 AI 搜索互联网</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">网页抓取</label>
+            <select class="form-select" id="tools-web-fetch">
+              <option value="true">启用</option>
+              <option value="false">禁用</option>
+            </select>
+            <div class="help-text">允许 AI 访问 URL 内容</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JSON 预览 -->
+    <div id="tab-preview" class="tab-content">
+      <div class="card">
+        <div class="card-title">📄 JSON 预览</div>
+        <div style="position: relative;">
+          <pre id="json-preview" style="background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: var(--radius-md); overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.85rem; max-height: 500px; overflow-y: auto;"></pre>
+          <button class="btn btn-secondary btn-sm" onclick="copyJsonPreview()" style="position: absolute; top: 8px; right: 8px;">
+            📋 复制
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加提供商模态框 -->
+  <div id="add-provider-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">添加模型提供商</div>
+        <button class="modal-close" onclick="closeAddProviderModal()">×</button>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">选择预设模板</label>
+        <select class="form-select" id="template-select" onchange="onTemplateSelect()">
+          <option value="">-- 自定义 --</option>
+          <option value="bailian">阿里云百炼 (Qwen)</option>
+          <option value="zhipu">智谱 AI (ChatGLM)</option>
+          <option value="minimax">MiniMax</option>
+          <option value="moonshot">月之暗面 (Kimi)</option>
+          <option value="deepseek">深度求索 (DeepSeek)</option>
+          <option value="baichuan">百川智能</option>
+          <option value="stepfun">阶跃星辰</option>
+          <option value="custom">自定义配置</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">提供商 ID</label>
+        <input type="text" class="form-input" id="modal-provider-id" placeholder="例如：bailian, zhipu">
+        <div class="help-text">用于在配置中引用此提供商</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Base URL</label>
+        <input type="text" class="form-input" id="modal-base-url" placeholder="https://api.example.com/v1">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">API Key</label>
+        <input type="text" class="form-input" id="modal-api-key" placeholder="sk-xxxxxxxxxxxxxxxx">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">API 类型</label>
+        <select class="form-select" id="modal-api-type">
+          <option value="openai-completions">OpenAI 兼容</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn btn-primary" onclick="confirmAddProvider()">确认添加</button>
+        <button class="btn btn-secondary" onclick="closeAddProviderModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 通知 -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let configData = {};
+
+    // 预设模板配置
+    const PROVIDER_TEMPLATES = {
+      bailian: {
+        name: '阿里云百炼',
+        icon: '☁️',
+        id: 'bailian',
+        baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        api: 'openai-completions',
+        desc: '阿里云通义千问系列模型',
+        models: [
+          { id: 'qwen3.5-plus', name: 'Qwen3.5 Plus', contextWindow: 128000, maxTokens: 4096 },
+          { id: 'qwen3.5-turbo', name: 'Qwen3.5 Turbo', contextWindow: 128000, maxTokens: 4096 },
+          { id: 'qwen3-max', name: 'Qwen3 Max', contextWindow: 200000, maxTokens: 8192 }
+        ]
+      },
+      zhipu: {
+        name: '智谱 AI',
+        icon: '🧠',
+        id: 'zhipu',
+        baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+        api: 'openai-completions',
+        desc: '智谱 ChatGLM 系列模型',
+        models: [
+          { id: 'glm-4-plus', name: 'GLM-4 Plus', contextWindow: 128000, maxTokens: 4096 },
+          { id: 'glm-4-flash', name: 'GLM-4 Flash', contextWindow: 128000, maxTokens: 4096 },
+          { id: 'glm-4-air', name: 'GLM-4 Air', contextWindow: 128000, maxTokens: 4096 }
+        ]
+      },
+      minimax: {
+        name: 'MiniMax',
+        icon: '🤖',
+        id: 'minimax',
+        baseUrl: 'https://api.minimax.chat/v1',
+        api: 'openai-completions',
+        desc: 'MiniMax ABAB 系列模型',
+        models: [
+          { id: 'abab6.5s-chat', name: 'ABAB 6.5s', contextWindow: 256000, maxTokens: 4096 },
+          { id: 'abab6.5g-chat', name: 'ABAB 6.5g', contextWindow: 256000, maxTokens: 4096 },
+          { id: 'abab6.5t-chat', name: 'ABAB 6.5t', contextWindow: 256000, maxTokens: 4096 }
+        ]
+      },
+      moonshot: {
+        name: '月之暗面',
+        icon: '🌙',
+        id: 'moonshot',
+        baseUrl: 'https://api.moonshot.cn/v1',
+        api: 'openai-completions',
+        desc: '月之暗面 Kimi 智能助手',
+        models: [
+          { id: 'moonshot-v1-8k', name: 'Moonshot v1 8K', contextWindow: 8000, maxTokens: 2048 },
+          { id: 'moonshot-v1-32k', name: 'Moonshot v1 32K', contextWindow: 32000, maxTokens: 4096 },
+          { id: 'moonshot-v1-128k', name: 'Moonshot v1 128K', contextWindow: 128000, maxTokens: 8192 }
+        ]
+      },
+      deepseek: {
+        name: '深度求索',
+        icon: '🔬',
+        id: 'deepseek',
+        baseUrl: 'https://api.deepseek.com/v1',
+        api: 'openai-completions',
+        desc: 'DeepSeek 系列模型',
+        models: [
+          { id: 'deepseek-chat', name: 'DeepSeek Chat', contextWindow: 128000, maxTokens: 4096 },
+          { id: 'deepseek-coder', name: 'DeepSeek Coder', contextWindow: 128000, maxTokens: 4096 }
+        ]
+      },
+      baichuan: {
+        name: '百川智能',
+        icon: '🌊',
+        id: 'baichuan',
+        baseUrl: 'https://api.baichuan-ai.com/v1',
+        api: 'openai-completions',
+        desc: '百川 Baichuan 系列模型',
+        models: [
+          { id: 'Baichuan4', name: 'Baichuan 4', contextWindow: 128000, maxTokens: 4096 },
+          { id: 'Baichuan3-Turbo', name: 'Baichuan 3 Turbo', contextWindow: 32000, maxTokens: 4096 }
+        ]
+      },
+      stepfun: {
+        name: '阶跃星辰',
+        icon: '⭐',
+        id: 'stepfun',
+        baseUrl: 'https://api.stepfun.com/v1',
+        api: 'openai-completions',
+        desc: '阶跃星辰 Step 系列模型',
+        models: [
+          { id: 'step-1-8k', name: 'Step-1 8K', contextWindow: 8000, maxTokens: 2048 },
+          { id: 'step-1-32k', name: 'Step-1 32K', contextWindow: 32000, maxTokens: 4096 },
+          { id: 'step-1-128k', name: 'Step-1 128K', contextWindow: 128000, maxTokens: 8192 }
+        ]
+      }
+    };
+
+    // 切换选项卡
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+
+      if (tabId === 'preview') {
+        updateJsonPreview();
+      }
+    }
+
+    // 渲染模板卡片
+    function renderTemplates() {
+      const container = document.getElementById('provider-templates');
+      container.innerHTML = '';
+
+      for (const [key, template] of Object.entries(PROVIDER_TEMPLATES)) {
+        const card = document.createElement('div');
+        card.className = 'template-card';
+        card.onclick = () => useTemplate(key);
+        card.innerHTML = `
+          <div class="template-card-header">
+            <div class="template-card-icon">${template.icon}</div>
+            <div>
+              <div class="template-card-title">${template.name}</div>
+              <div class="template-card-desc">${template.desc}</div>
+            </div>
+          </div>
+          <ul class="template-card-features">
+            ${template.models.map(m => `<li>• ${m.name}</li>`).join('')}
+          </ul>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    // 使用模板
+    function useTemplate(templateKey) {
+      const template = PROVIDER_TEMPLATES[templateKey];
+      if (!template) return;
+
+      // 检查是否已存在
+      if (configData.models?.providers?.[template.id]) {
+        showToast(`"${template.name}" 已存在，无需重复添加`, 'error');
+        return;
+      }
+
+      // 添加提供商
+      if (!configData.models) configData.models = {};
+      if (!configData.models.providers) configData.models.providers = {};
+
+      configData.models.providers[template.id] = {
+        baseUrl: template.baseUrl,
+        apiKey: '',
+        api: template.api,
+        models: template.models.map(m => ({
+          id: m.id,
+          name: m.name,
+          reasoning: false,
+          input: ['text'],
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+          contextWindow: m.contextWindow,
+          maxTokens: m.maxTokens
+        }))
+      };
+
+      renderModelProviders();
+      showToast(`已添加 ${template.name}，请填写 API Key`, 'success');
+    }
+
+    // 拖拽处理
+    function handleDrop(event) {
+      event.preventDefault();
+      event.currentTarget.classList.remove('dragover');
+      
+      const file = event.dataTransfer.files[0];
+      if (file && file.name.endsWith('.json')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            configData = JSON.parse(e.target.result);
+            loadConfigToForm();
+            showToast('配置文件加载成功！', 'success');
+          } catch (err) {
+            showToast('配置文件格式错误：' + err.message, 'error');
+          }
+        };
+        reader.readAsText(file);
+      } else {
+        showToast('请拖拽 JSON 文件', 'error');
+      }
+    }
+
+    function handleDragOver(event) {
+      event.preventDefault();
+      event.currentTarget.classList.add('dragover');
+    }
+
+    function handleDragLeave(event) {
+      event.currentTarget.classList.remove('dragover');
+    }
+
+    // 加载文件
+    function loadFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          configData = JSON.parse(e.target.result);
+          loadConfigToForm();
+          showToast('配置文件加载成功！', 'success');
+        } catch (err) {
+          showToast('配置文件格式错误：' + err.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // 加载默认配置
+    function loadDefaultConfig() {
+      const defaultConfig = {
+        "meta": {
+          "lastTouchedVersion": "2026.2.1",
+          "lastTouchedAt": new Date().toISOString()
+        },
+        "browser": { "enabled": true, "defaultProfile": "openclaw" },
+        "models": {
+          "providers": {
+            "bailian": {
+              "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "apiKey": "",
+              "api": "openai-completions",
+              "models": [{
+                "id": "qwen3.5-plus",
+                "name": "Qwen3.5 Plus",
+                "reasoning": false,
+                "input": ["text"],
+                "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+                "contextWindow": 128000,
+                "maxTokens": 4096
+              }]
+            }
+          }
+        },
+        "agents": {
+          "defaults": {
+            "workspace": "./workspace",
+            "compaction": { "mode": "safeguard" },
+            "maxConcurrent": 4,
+            "subagents": { "maxConcurrent": 8 },
+            "model": { "primary": "bailian/qwen3.5-plus" }
+          }
+        },
+        "tools": {
+          "profile": "full",
+          "web": {
+            "search": { "enabled": false },
+            "fetch": { "enabled": true }
+          }
+        },
+        "gateway": {
+          "port": 18789,
+          "mode": "local",
+          "bind": "loopback",
+          "auth": { "mode": "token", "token": "" }
+        },
+        "channels": {
+          "feishu": { "enabled": true, "appId": "", "appSecret": "" },
+          "dingtalk-connector": { "enabled": false, "clientId": "", "clientSecret": "" },
+          "qqbot": { "enabled": false, "appId": "", "clientSecret": "" }
+        }
+      };
+
+      configData = defaultConfig;
+      loadConfigToForm();
+      showToast('已加载默认配置', 'success');
+    }
+
+    // 加载配置到表单
+    function loadConfigToForm() {
+      // 模型提供商
+      renderModelProviders();
+
+      // 代理设置
+      if (configData.agents?.defaults) {
+        document.getElementById('agent-workspace').value = configData.agents.defaults.workspace || '';
+        document.getElementById('agent-primary-model').value = configData.agents.defaults.model?.primary || '';
+        document.getElementById('agent-max-concurrent').value = configData.agents.defaults.maxConcurrent || 4;
+        document.getElementById('agent-subagent-max').value = configData.agents.defaults.subagents?.maxConcurrent || 8;
+        document.getElementById('agent-compaction-mode').value = configData.agents.defaults.compaction?.mode || 'safeguard';
+      }
+
+      // Gateway
+      if (configData.gateway) {
+        document.getElementById('gateway-port').value = configData.gateway.port || 18789;
+        document.getElementById('gateway-bind').value = configData.gateway.bind || 'loopback';
+        document.getElementById('gateway-mode').value = configData.gateway.mode || 'local';
+        document.getElementById('gateway-auth-mode').value = configData.gateway.auth?.mode || 'token';
+        document.getElementById('gateway-token').value = configData.gateway.auth?.token || '';
+      }
+
+      // 消息通道
+      if (configData.channels) {
+        if (configData.channels.feishu) {
+          document.getElementById('feishu-enabled').value = configData.channels.feishu.enabled ? 'true' : 'false';
+          document.getElementById('feishu-app-id').value = configData.channels.feishu.appId || '';
+          document.getElementById('feishu-app-secret').value = configData.channels.feishu.appSecret || '';
+        }
+        if (configData.channels.dingtalk-connector) {
+          document.getElementById('dingtalk-enabled').value = configData.channels.dingtalk-connector.enabled ? 'true' : 'false';
+          document.getElementById('dingtalk-client-id').value = configData.channels.dingtalk-connector.clientId || '';
+          document.getElementById('dingtalk-client-secret').value = configData.channels.dingtalk-connector.clientSecret || '';
+        }
+        if (configData.channels.qqbot) {
+          document.getElementById('qqbot-enabled').value = configData.channels.qqbot.enabled ? 'true' : 'false';
+          document.getElementById('qqbot-app-id').value = configData.channels.qqbot.appId || '';
+          document.getElementById('qqbot-client-secret').value = configData.channels.qqbot.clientSecret || '';
+        }
+      }
+
+      // 工具
+      if (configData.tools) {
+        document.getElementById('tools-profile').value = configData.tools.profile || 'full';
+        document.getElementById('tools-web-search').value = configData.tools.web?.search?.enabled ? 'true' : 'false';
+        document.getElementById('tools-web-fetch').value = configData.tools.web?.fetch?.enabled ? 'true' : 'false';
+      }
+
+      updateJsonPreview();
+      showToast('配置已加载到表单', 'success');
+    }
+
+    // 渲染模型提供商
+    function renderModelProviders() {
+      const container = document.getElementById('model-providers');
+      container.innerHTML = '';
+
+      if (!configData.models?.providers) {
+        container.innerHTML = '<div class="help-text">暂无模型提供商，请添加</div>';
+        return;
+      }
+
+      for (const [providerId, provider] of Object.entries(configData.models.providers)) {
+        const template = PROVIDER_TEMPLATES[providerId];
+        const icon = template ? template.icon : '🔌';
+        const name = template ? template.name : providerId;
+
+        const div = document.createElement('div');
+        div.className = 'model-item';
+        div.innerHTML = `
+          <div class="model-item-header">
+            <div class="model-item-title">${icon} ${name} (${providerId})</div>
+            <div class="model-item-actions">
+              <button class="btn btn-secondary btn-sm" onclick="editModelProvider('${providerId}')">✏️ 编辑</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteModelProvider('${providerId}')">🗑️ 删除</button>
+            </div>
+          </div>
+          <div class="model-form-grid">
+            <div class="form-group full-width">
+              <label class="form-label">Base URL</label>
+              <input type="text" class="form-input" value="${provider.baseUrl || ''}" onchange="updateProvider('${providerId}', 'baseUrl', this.value)">
+            </div>
+            <div class="form-group full-width">
+              <label class="form-label">API Key</label>
+              <input type="password" class="form-input" value="${provider.apiKey || ''}" onchange="updateProvider('${providerId}', 'apiKey', this.value)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">API 类型</label>
+              <input type="text" class="form-input" value="${provider.api || 'openai-completions'}" onchange="updateProvider('${providerId}', 'api', this.value)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">模型数量</label>
+              <input type="number" class="form-input" value="${provider.models?.length || 0}" disabled>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      }
+    }
+
+    // 显示添加提供商模态框
+    function showAddProviderModal() {
+      document.getElementById('add-provider-modal').classList.add('show');
+      document.getElementById('template-select').value = '';
+      document.getElementById('modal-provider-id').value = '';
+      document.getElementById('modal-base-url').value = '';
+      document.getElementById('modal-api-key').value = '';
+      document.getElementById('modal-api-type').value = 'openai-completions';
+    }
+
+    // 关闭模态框
+    function closeAddProviderModal() {
+      document.getElementById('add-provider-modal').classList.remove('show');
+    }
+
+    // 模板选择
+    function onTemplateSelect() {
+      const templateKey = document.getElementById('template-select').value;
+      if (!templateKey) {
+        document.getElementById('modal-provider-id').value = '';
+        document.getElementById('modal-base-url').value = '';
+        return;
+      }
+
+      const template = PROVIDER_TEMPLATES[templateKey];
+      if (template) {
+        document.getElementById('modal-provider-id').value = template.id;
+        document.getElementById('modal-base-url').value = template.baseUrl;
+      }
+    }
+
+    // 确认添加提供商
+    function confirmAddProvider() {
+      const providerId = document.getElementById('modal-provider-id').value.trim();
+      const baseUrl = document.getElementById('modal-base-url').value.trim();
+      const apiKey = document.getElementById('modal-api-key').value.trim();
+      const apiType = document.getElementById('modal-api-type').value;
+
+      if (!providerId) {
+        showToast('请填写提供商 ID', 'error');
+        return;
+      }
+
+      if (!baseUrl) {
+        showToast('请填写 Base URL', 'error');
+        return;
+      }
+
+      // 检查是否已存在
+      if (configData.models?.providers?.[providerId]) {
+        showToast(`"${providerId}" 已存在`, 'error');
+        return;
+      }
+
+      // 添加提供商
+      if (!configData.models) configData.models = {};
+      if (!configData.models.providers) configData.models.providers = {};
+
+      configData.models.providers[providerId] = {
+        baseUrl: baseUrl,
+        apiKey: apiKey,
+        api: apiType,
+        models: []
+      };
+
+      renderModelProviders();
+      closeAddProviderModal();
+      showToast(`已添加模型提供商：${providerId}`, 'success');
+    }
+
+    // 更新提供商
+    function updateProvider(providerId, field, value) {
+      if (configData.models?.providers?.[providerId]) {
+        configData.models.providers[providerId][field] = value;
+      }
+    }
+
+    // 编辑模型提供商
+    function editModelProvider(providerId) {
+      const provider = configData.models.providers[providerId];
+      if (!provider) return;
+
+      const template = PROVIDER_TEMPLATES[providerId];
+      const modelName = template ? template.name : providerId;
+      const modelCount = provider.models?.length || 0;
+
+      alert(`${modelName} (${providerId})\n\n模型数量：${modelCount}\n\nBase URL: ${provider.baseUrl}\n\nAPI Key: ${provider.apiKey ? '已配置' : '未配置'}\n\n如需修改模型列表，请手动编辑 JSON 配置`);
+    }
+
+    // 删除模型提供商
+    function deleteModelProvider(providerId) {
+      if (confirm(`确定要删除模型提供商 "${providerId}" 吗？`)) {
+        delete configData.models.providers[providerId];
+        renderModelProviders();
+        showToast(`已删除模型提供商：${providerId}`, 'success');
+      }
+    }
+
+    // 更新 JSON 预览
+    function updateJsonPreview() {
+      saveFormToConfig();
+      
+      if (!configData.meta) configData.meta = {};
+      configData.meta.lastTouchedAt = new Date().toISOString();
+      configData.meta.lastTouchedVersion = '2026.2.1';
+
+      const preview = document.getElementById('json-preview');
+      preview.textContent = JSON.stringify(configData, null, 2);
+    }
+
+    // 保存配置
+    function saveConfig() {
+      saveFormToConfig();
+      
+      if (!configData.meta) configData.meta = {};
+      configData.meta.lastTouchedAt = new Date().toISOString();
+      configData.meta.lastTouchedVersion = '2026.2.1';
+
+      const jsonStr = JSON.stringify(configData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'openclaw.json';
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showToast('配置已保存并下载！\n请替换到 ~/.openclaw/openclaw.json 后重启 Gateway', 'success');
+    }
+
+    // 保存表单到配置
+    function saveFormToConfig() {
+      // 代理设置
+      if (!configData.agents) configData.agents = {};
+      if (!configData.agents.defaults) configData.agents.defaults = {};
+      
+      configData.agents.defaults.workspace = document.getElementById('agent-workspace').value;
+      configData.agents.defaults.model = { primary: document.getElementById('agent-primary-model').value };
+      configData.agents.defaults.maxConcurrent = parseInt(document.getElementById('agent-max-concurrent').value) || 4;
+      configData.agents.defaults.subagents = { maxConcurrent: parseInt(document.getElementById('agent-subagent-max').value) || 8 };
+      configData.agents.defaults.compaction = { mode: document.getElementById('agent-compaction-mode').value };
+
+      // Gateway
+      if (!configData.gateway) configData.gateway = {};
+      configData.gateway.port = parseInt(document.getElementById('gateway-port').value) || 18789;
+      configData.gateway.bind = document.getElementById('gateway-bind').value;
+      configData.gateway.mode = document.getElementById('gateway-mode').value;
+      configData.gateway.auth = {
+        mode: document.getElementById('gateway-auth-mode').value,
+        token: document.getElementById('gateway-token').value
+      };
+
+      // 消息通道
+      if (!configData.channels) configData.channels = {};
+      
+      if (configData.channels.feishu) {
+        configData.channels.feishu.enabled = document.getElementById('feishu-enabled').value === 'true';
+        configData.channels.feishu.appId = document.getElementById('feishu-app-id').value;
+        configData.channels.feishu.appSecret = document.getElementById('feishu-app-secret').value;
+      }
+
+      if (configData.channels.dingtalk-connector) {
+        configData.channels.dingtalk-connector.enabled = document.getElementById('dingtalk-enabled').value === 'true';
+        configData.channels.dingtalk-connector.clientId = document.getElementById('dingtalk-client-id').value;
+        configData.channels.dingtalk-connector.clientSecret = document.getElementById('dingtalk-client-secret').value;
+      }
+
+      if (configData.channels.qqbot) {
+        configData.channels.qqbot.enabled = document.getElementById('qqbot-enabled').value === 'true';
+        configData.channels.qqbot.appId = document.getElementById('qqbot-app-id').value;
+        configData.channels.qqbot.clientSecret = document.getElementById('qqbot-client-secret').value;
+      }
+
+      // 工具
+      if (!configData.tools) configData.tools = {};
+      configData.tools.profile = document.getElementById('tools-profile').value;
+      if (!configData.tools.web) configData.tools.web = {};
+      configData.tools.web.search = { enabled: document.getElementById('tools-web-search').value === 'true' };
+      configData.tools.web.fetch = { enabled: document.getElementById('tools-web-fetch').value === 'true' };
+    }
+
+    // 下载配置
+    function downloadConfig() {
+      saveFormToConfig();
+      const jsonStr = JSON.stringify(configData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'openclaw-backup-' + new Date().toISOString().split('T')[0] + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('配置已下载备份', 'success');
+    }
+
+    // 复制 JSON 到剪贴板
+    function copyJsonPreview() {
+      const jsonStr = document.getElementById('json-preview').textContent;
+      navigator.clipboard.writeText(jsonStr).then(() => {
+        showToast('JSON 已复制到剪贴板', 'success');
+      }).catch(() => {
+        showToast('复制失败，请手动复制', 'error');
+      });
+    }
+
+    // 复制到剪贴板
+    function copyToClipboard() {
+      saveFormToConfig();
+      const jsonStr = JSON.stringify(configData, null, 2);
+      navigator.clipboard.writeText(jsonStr).then(() => {
+        showToast('配置 JSON 已复制到剪贴板', 'success');
+      }).catch(() => {
+        showToast('复制失败', 'error');
+      });
+    }
+
+    // Toast 通知
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message.replace(/\n/g, '<br/>');
+      toast.className = 'toast show' + (type === 'error' ? ' error' : '');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+
+    // 页面加载
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🦎 OpenClaw Config Editor (Portable + Templates) 已加载');
+      renderTemplates();
+      loadDefaultConfig();
+    });
+  </script>
+</body>
+</html>
