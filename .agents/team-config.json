@@ -1,0 +1,78 @@
+{
+  "team": {
+    "name": "gogoclaw-team",
+    "description": "多角色协作团队配置",
+    "roles": [
+      {
+        "name": "张三",
+        "role": "总经理",
+        "agent": "main",
+        "model": "qwen3.5-plus",
+        "responsibilities": [
+          "团队协调与管理",
+          "任务分配",
+          "最终决策"
+        ]
+      },
+      {
+        "name": "李四",
+        "role": "程序员",
+        "agent": "dev-agent",
+        "model": "GLM-5",
+        "responsibilities": [
+          "代码开发",
+          "功能实现",
+          "代码审查"
+        ],
+        "tools": ["OpenCode"]
+      },
+      {
+        "name": "王五",
+        "role": "文档专员",
+        "agent": "doc-agent",
+        "model": "qwen3.5-plus",
+        "responsibilities": [
+          "技术文档撰写",
+          "API 文档维护",
+          "用户手册编写"
+        ]
+      },
+      {
+        "name": "钱六",
+        "role": "美工设计师",
+        "agent": "design-agent",
+        "model": "qwen3.5-plus",
+        "responsibilities": [
+          "界面设计",
+          "图标与素材制作",
+          "视觉规范制定"
+        ]
+      },
+      {
+        "name": "赵七",
+        "role": "程序设计师",
+        "agent": "code-agent",
+        "model": "qwen3.5-plus",
+        "responsibilities": [
+          "系统架构设计",
+          "技术方案规划",
+          "代码实现与优化",
+          "技术选型建议"
+        ],
+        "tools": ["OpenCode", "exec", "browser"],
+        "specialties": [
+          "软件架构",
+          "算法设计",
+          "性能优化",
+          "代码审查"
+        ]
+      }
+    ],
+    "workflow": {
+      "manager": "张三",
+      "members": ["李四", "王五", "钱六", "赵七"],
+      "communication": "sequential",
+      "deliverables": ["代码", "文档", "设计稿", "技术方案"]
+    }
+  }
+}
